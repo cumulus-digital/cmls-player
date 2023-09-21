@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0">
+		<title>Player test</title>
+	</head>
+	<body>
+		<!--<link rel="stylesheet" href="/outer.css">-->
+		<cmls-player
+			sdk="triton"
+			backgroundColor="#116"
+			textColor="#fff"
+			buttonBackgroundColor="#fff"
+			buttonInnerColor="#000"
+		>
+			<station
+				mount="WPROFMAAC"
+				name="92 Pro FM"
+				logo="https://express-images.franklymedia.com/6616/sites/27/2017/10/11170701/TEST-FM-107.1-Sitelogo.png"
+				vast2="https://pubads.g.doubleclick.net/gampad/ads?iu=/6717/player/vid.test107&description_url=https%3A%2F%2Fwww.test107.com%2F&tfcd=0&npa=0&sz=640x480&gdfp_req=1&output=vast&unviewed_position_start=1&env=vp&impl=s&correlator="
+			></station>
+			<station
+				mount="WMALFMAAC"
+				name="News Talk 105.9"
+				logo="https://express-images.franklymedia.com/6616/sites/238/2022/01/18160857/WMAL-FM-Sitelogo-2022-01-18.png"
+				vast2="https://pubads.g.doubleclick.net/gampad/ads?iu=/6717/player/vid.test107&description_url=https%3A%2F%2Fwww.test107.com%2F&tfcd=0&npa=0&sz=640x480&gdfp_req=1&output=vast&unviewed_position_start=1&env=vp&impl=s&correlator="
+			></station>
+
+			<!-- Define the slot elsewhere. Display/refresh will be called when dropdown is opened. -->
+			<ad-tag	id="playerSponsor"></ad-tag>
+
+		</cmls-player>
+		<script src="/bundle.js" async></script>
+	</body>
+</html>

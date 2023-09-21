@@ -1,0 +1,6 @@
+{
+	"siteframe_id": "cmls_siteframe",
+	"sdk_div_id": "'cmls-player-sdk-connector'",
+	"sdk_url": "'//sdk.listenlive.co/web/2.9/td-sdk.min.js'",
+	"mediaplayer_id_prefix": "cmlsmediaplayer"
+}
