@@ -1,21 +1,27 @@
-:host {
+:host,
+cmls-player {
 	&,
 	& * {
 		&,
 		&::before,
 		&::after {
+			//all: initial;
 			box-sizing: border-box;
 		}
 	}
+	display: block;
+	height: 60px;
+	width: 250px;
 }
-:host > div {
+:host > div,
+#listenlive-container {
 	color: var(--textColor, #fff);
 	font-family: arial, sans-serif;
 	font-size: 14px;
 	line-height: 1.25;
 	width: auto;
 	max-width: 100%;
-	position: relative;
+	position: absolute;
 	z-index: 2147483647;
 }
 #listen-live {
@@ -40,7 +46,7 @@
 
 	min-width: 250px;
 	//max-width: 320px;
-	height: 65px;
+	height: 60px;
 	overflow: visible;
 
 	position: relative;
@@ -125,6 +131,7 @@
 			width: 100%;
 			height: 100%;
 			border-radius: 100% 60%;
+			box-sizing: content-box;
 			padding: 4px;
 			background-image: linear-gradient(
 				0deg,
@@ -132,7 +139,7 @@
 				rgba(0, 0, 0, 0) 90%
 			);
 			mask: radial-gradient(circle at center, #0000 50%, #000);
-			z-index: 1;
+			z-index: -1;
 			mix-blend-mode: difference;
 			background-blend-mode: difference;
 			animation: 5s infinite alternate ease-out buffering;
@@ -208,11 +215,12 @@
 
 	padding: 0.75em;
 
-	width: 400px;
-	max-width: 100%;
+	min-width: 100%;
+	max-width: 400px;
+	//max-width: 100%;
 
 	position: absolute;
-	top: 65px;
+	top: 100%;
 	left: 0;
 
 	.station {

@@ -72,18 +72,19 @@ export const Player = (props) => {
 		);
 	};
 
-	useEffect(() => {
-		import(
-			/* webpackChunkName: 'player-style' */
-			/* webpackMode: 'lazy' */
-			'./player.scss?inline'
-		).then((style) => {
-			if (style?.default?.use) {
-				console.log(me.current);
-				style.default.use({ target: me.current.firstChild });
-			}
-		});
-	}, [me]);
+	import(
+		/* webpackChunkName: 'player-style' */
+		/* webpackMode: 'eager' */
+		/* webpackPrefetch: true */
+		/* webpackPreload: true */
+		'./player.scss?inline'
+	).then((style) => {
+		if (style?.default?.use) {
+			console.log(me.current);
+			style.default.use({ target: me.current.firstChild });
+		}
+	});
+	//useEffect(() => {}, [me]);
 
 	return (
 		<div id="listenlive-container" ref={me} style={styleAttr}>
