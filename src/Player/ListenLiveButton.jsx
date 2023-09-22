@@ -9,7 +9,8 @@ import {
 
 import { stream_status } from '../consts';
 
-import { FaPlay, FaPause, FaAngleDown, FaAngleUp } from 'react-icons/fa';
+import { FaAngleDown, FaAngleUp } from 'react-icons/fa';
+import { FaPlay, FaPause } from 'react-icons/fa6';
 
 /*
 const icons = {
@@ -155,10 +156,11 @@ export const ListenLiveButton = (props) => {
 			<div class="status">
 				<h1
 					class={`
+						${cueLabel.length ? 'smaller' : ''}
 						${buttonLabel.length > 25 ? 'scroll' : ''}
 					`}
 					data-label={buttonLabel}
-					style={`--speed: ${buttonLabel.length / 3}s`}
+					style={`--speed: ${buttonLabel.length / 2}s`}
 				>
 					{buttonLabel}
 				</h1>

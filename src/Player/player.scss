@@ -66,11 +66,14 @@ cmls-player {
 	}
 
 	h1 {
-		font-size: 1.2em;
+		font-size: 1.35em;
 		transition: font-size 0.1s;
+		&.smaller {
+			font-size: 1.2em;
+		}
 	}
 	&.big-text h1 {
-		font-size: 2em;
+		font-size: 2em !important;
 		text-transform: uppercase;
 		transition: font-size 0s;
 	}
@@ -172,7 +175,7 @@ cmls-player {
 		position: absolute;
 	}
 
-	&.scroll {
+	.scroll {
 		@keyframes scroller {
 			from {
 				transform: translateX(0%);
@@ -256,9 +259,10 @@ cmls-player {
 		}
 
 		img {
-			max-width: 100%;
 			height: auto;
-			object-fit: contain;
+			max-width: 100%;
+			max-height: 100%;
+			object-fit: fill;
 		}
 
 		h2 {
@@ -286,13 +290,16 @@ cmls-player {
 		}
 
 		.logo {
+			display: flex;
+			justify-content: center;
 			position: relative;
-			max-width: 20%;
+			width: 20%;
+			min-height: 40px;
 
 			.overlay {
 				display: none;
-				width: 50%;
-				height: 50%;
+				width: 25px;
+				height: 25px;
 			}
 		}
 
@@ -322,7 +329,7 @@ cmls-player {
 				top: 50%;
 				transform: translate(-50%, -50%);
 				//box-shadow: 0 0 10px rgba(0, 0, 0, 1);
-				filter: drop-shadow(0 0 10px rgba(0, 0, 0, 1));
+				filter: drop-shadow(0 0 12px #000);
 			}
 		}
 
