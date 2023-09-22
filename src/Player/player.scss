@@ -66,8 +66,13 @@ cmls-player {
 	}
 
 	h1 {
+		font-size: 1.2em;
+		transition: font-size 0.1s;
+	}
+	&.big-text h1 {
 		font-size: 2em;
 		text-transform: uppercase;
+		transition: font-size 0s;
 	}
 	h2 {
 		font-size: 1em;
@@ -98,11 +103,6 @@ cmls-player {
 		}
 	}
 	&.playing {
-		h1 {
-			font-size: 1.2em;
-			text-transform: none;
-		}
-
 		/*
 		.icon svg {
 			margin-left: 0;
@@ -170,30 +170,30 @@ cmls-player {
 	.onair {
 		white-space: nowrap;
 		position: absolute;
+	}
 
-		&.scroll {
-			@keyframes onair {
-				from {
-					transform: translateX(0%);
-				}
-				to {
-					transform: translateX(calc(-100% - 2ch));
-				}
+	&.scroll {
+		@keyframes scroller {
+			from {
+				transform: translateX(0%);
 			}
+			to {
+				transform: translateX(calc(-100% - 2ch));
+			}
+		}
 
-			animation: var(--speed, 10s) infinite linear onair;
+		animation: var(--speed, 10s) infinite linear scroller;
 
-			&::before,
-			&::after {
-				content: attr(data-onair);
-				position: absolute;
-				padding-left: 2ch;
-				left: 100%;
-				top: 0;
-			}
-			&::after {
-				left: calc(200% + 2ch);
-			}
+		&::before,
+		&::after {
+			content: attr(data-label);
+			position: absolute;
+			padding-left: 2ch;
+			left: 100%;
+			top: 0;
+		}
+		&::after {
+			left: calc(200% + 2ch);
 		}
 	}
 }
@@ -218,6 +218,10 @@ cmls-player {
 	min-width: 100%;
 	max-width: 400px;
 	//max-width: 100%;
+
+	@media (min-width: 450px) {
+		min-width: 420px;
+	}
 
 	position: absolute;
 	top: 100%;

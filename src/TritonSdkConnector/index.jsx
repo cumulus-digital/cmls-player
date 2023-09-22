@@ -71,6 +71,7 @@ export function TritonSdkConnector(props) {
 			'track-cue-point': onTrackCuePoint,
 			'speech-cue-point': onTrackCuePoint,
 			'ad-break-cue-point': onAdBreakStart,
+			'ad-break-cue-point-complete': onAdBreakEnd,
 			'ad-playback-start': showPrerollContainer,
 			'ad-playback-complete': hidePrerollContainer,
 			'ad-playback-error': hidePrerollContainer,
@@ -165,17 +166,45 @@ export function TritonSdkConnector(props) {
 		);
 	};
 
+	const setUnknownCuepoint = () => {
+		const { playerState } = store.getState();
+		log.debug(
+			playerState.current_station,
+			playerState.station_data[playerState.current_station]
+		);
+		let cuedata = {
+			artist: '',
+			title: '',
+		};
+		if (
+			playerState.current_station &&
+			playerState.station_data[playerState.current_station].tagline
+		) {
+			cuedata.artist =
+				playerState.station_data[playerState.current_station].tagline;
+		}
+		dispatch(playerStateActions['set/station/cuepoint'](cuedata));
+	};
+
 	const onAdBreakStart = (e) => {
 		if (typeof e?.data?.adBreakData === 'undefined') {
 			return;
 		}
 		log.debug('Ad break start', e);
+		setUnknownCuepoint();
+		/*
 		dispatch(
 			playerStateActions['set/station/cuepoint']({
-				artist: 'Thanks for listening!',
-				title: "We'll be back after these messages",
+				artist: 'Ad',
+				title: "Thanks for listening! We'll be back after these messages.",
 			})
 		);
+		*/
+	};
+
+	const onAdBreakEnd = (e) => {
+		log.debug('Ad break end', e);
+		setUnknownCuepoint();
 	};
 
 	const showPrerollContainer = (e) => {
@@ -273,7 +302,7 @@ export function TritonSdkConnector(props) {
 	 */
 	let fetchingNowPlaying = null;
 	useEffect(() => {
-		clearTimeout(fetchingNowPlaying);
+		clearInterval(fetchingNowPlaying);
 		fetchingNowPlaying = null;
 
 		if (playerState.playing) {
@@ -340,212 +369,3 @@ export function TritonSdkConnector(props) {
 		</>
 	);
 }
-
-// export function TritonSdkConnector2(props) {
-// 	const playerState = useSelector(selectPlayerState);
-// 	const dispatch = useDispatch();
-
-// 	const [hasAdBlocker, setHasAdBlocker] = useState(false);
-
-// 	/**
-// 	 * Initialize the Triton SDK
-// 	 */
-// 	const initSDK = () => {
-// 		const tdPlayerConfig = {
-// 			coreModules: [
-// 				{
-// 					id: 'MediaPlayer',
-// 					playerId: `${mediaplayer_id_prefix}-player`,
-// 					geoTargeting: {
-// 						desktop: {
-// 							isActive: false,
-// 						},
-// 					},
-// 					plugins: [
-// 						{
-// 							id: 'vastAd',
-// 						},
-// 					],
-// 				},
-// 				{
-// 					id: 'NowPlayingApi',
-// 				},
-// 				{
-// 					id: 'Npe',
-// 				},
-// 			],
-// 			playerReady: (e) => onPlayerReady(),
-// 			configurationError: (e) => onConfigError(e),
-// 			moduleError: (e) => onModuleError(e),
-// 			adBlockerDetected: (e) => adBlockerDetected(e),
-// 		};
-// 		player = new window.TDSdk(tdPlayerConfig);
-// 		log.debug('SDK Initialized', player);
-// 	};
-
-// 	/**
-// 	 * Called when Triton SDK is ready to be used
-// 	 * @param {Event} e
-// 	 * @returns
-// 	 */
-// 	const onPlayerReady = (e) => {
-// 		if (!player) {
-// 			log.error('onPlayerReady called, but player is not available!');
-// 			return;
-// 		}
-
-// 		const listeners = {
-// 			'stream-status': onStreamStatus,
-// 			'track-cue-point': onTrackCuePoint,
-// 			'speech-cue-point': onTrackCuePoint,
-// 			'ad-break-cue-point': onAdBreakStart,
-// 			'ad-playback-start': showPrerollContainer,
-// 			'ad-playback-complete': hidePrerollContainer,
-// 			'ad-playback-error': hidePrerollContainer,
-// 		};
-// 		for (let k in listeners) {
-// 			player.addEventListener(k, listeners[k]);
-// 		}
-// 		dispatch(playerStateActions.setReady(true));
-// 		log.debug('Triton player is ready.');
-// 	};
-// 	const onConfigError = (e) => {
-// 		log.warn('Configuration error', e);
-// 	};
-// 	const onModuleError = (e) => {
-// 		log.warn('Module error', e);
-// 	};
-// 	const adBlockerDetected = (e) => {
-// 		log.warn('Ad Blocker detected!');
-// 		setHasAdBlocker(true);
-// 	};
-
-// 	/**
-// 	 * Update player's stream status. Maps Triton code to stream_status.
-// 	 * @param {Event} e
-// 	 */
-// 	const onStreamStatus = (e) => {
-// 		if (
-// 			typeof e?.data?.code === 'undefined' ||
-// 			typeof stream_status?.[e.data.code] === 'undefined'
-// 		) {
-// 			return;
-// 		}
-// 		const { playerState } = store.getState();
-// 		log.debug('Updating stream status', {
-// 			current: playerState.status,
-// 			new: stream_status[e.data.code],
-// 		});
-// 		//dispatch(playerStateActions.status(stream_status[e.data.code]));
-// 		dispatch(playerStateActions['set/status'](stream_status[e.data.code]));
-// 	};
-
-// 	/**
-// 	 * Receives a track cue point event and updates the relevant station's state
-// 	 * @param {Event} e
-// 	 */
-// 	const onTrackCuePoint = (e) => {
-// 		if (typeof e?.data?.cuePoint === 'undefined') {
-// 			return;
-// 		}
-// 		log.debug('Received cue point', e);
-
-// 		const { playerState } = store.getState();
-// 		const { mount } = e.data;
-// 		const station = mount.replace(/AAC$/, '');
-// 		const { cueTitle: cuePointTitle, artistName: cuePointArtistName } =
-// 			e.data.cuePoint;
-
-// 		dispatch(
-// 			playerStateActions.setStationData({
-// 				[`${station}`]: {
-// 					cuePointTitle,
-// 					cuePointArtistName,
-// 				},
-// 			})
-// 		);
-// 	};
-
-// 	const onAdBreakStart = (e) => {
-// 		if (typeof e?.data?.adBreakData === 'undefined') {
-// 			return;
-// 		}
-// 		const { playerState } = store.getState();
-// 		log.debug('onAdBreakStart', e);
-// 	};
-
-// 	const showPrerollContainer = (e) => {
-// 		const c = document.getElementById(`${mediaplayer_id_prefix}-wrapper`);
-// 		c && c.classList.add('playing');
-// 	};
-
-// 	const hidePrerollContainer = (e) => {
-// 		const c = document.getElementById(`${mediaplayer_id_prefix}-wrapper`);
-// 		c && c.classList.remove('playing');
-// 	};
-
-// 	const startPreroll = (e) => {
-// 		if (hasAdBlocker) {
-// 			startPlay();
-// 			return;
-// 		}
-
-// 		if (vast_url) {
-// 			['ad-playback-complete', 'ad-playback-error'].forEach((k) => {
-// 				player.addEventListener(k, startPlay);
-// 			});
-// 			player.playAd('vastAd', { url: vast_url });
-// 		}
-// 	};
-
-// 	const startPlay = (e) => {
-// 		['ad-playback-complete', 'ad-playback-error'].forEach((k) => {
-// 			player.removeEventListener(k, startPlay);
-// 		});
-
-// 		player.play({ station: playerState.playing });
-// 	};
-// 	const stopPlay = (e) => {
-// 		['ad-playback-complete', 'ad-playback-error'].forEach((k) => {
-// 			player.removeEventListener(k, startPlay);
-// 		});
-
-// 		player.stop();
-// 	};
-
-// 	/**
-// 	 * Handle call to start playing
-// 	 */
-// 	useEffect(() => {
-// 		if (!playerState.ready) {
-// 			return;
-// 		}
-
-// 		if (!playerState.playing) {
-// 			stopPlay();
-// 		} else {
-// 			startPreroll();
-// 		}
-// 	}, [playerState.playing]);
-
-// 	const SdkScript = useMemo(() => {
-// 		return <script src={sdk_url} async onload={initSDK}></script>;
-// 	}, []);
-
-// 	const MediaPlayer = useMemo(() => {
-// 		return (
-// 			<div id={`${mediaplayer_id_prefix}-wrapper`}>
-// 				<div class="container">
-// 					<div id={`${mediaplayer_id_prefix}-player`}></div>
-// 				</div>
-// 			</div>
-// 		);
-// 	}, []);
-
-// 	return (
-// 		<>
-// 			{MediaPlayer}
-// 			{SdkScript}
-// 		</>
-// 	);
-// }

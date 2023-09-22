@@ -27,7 +27,14 @@ const PlayerProvider = (props) => {
 	const me = useRef(null);
 
 	window.addEventListener('click', (e) => {
-		if (me?.current?.base && !e.composedPath().includes(me.current.base)) {
+		const path = e.composedPath();
+		if (
+			me?.current?.base &&
+			!path.includes(me.current.base) &&
+			!e.target.matches(
+				'#cmlsmediaplayer-wrapper, #cmlsmediaplayer-wrapper *'
+			)
+		) {
 			store.dispatch(playerStateActions['set/dropdown_open'](false));
 		}
 	});

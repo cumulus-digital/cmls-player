@@ -49,22 +49,27 @@ export const ListenLiveButton = (props) => {
 	const dispatch = useDispatch();
 
 	const [iconState, setIconState] = useState('open');
+	const [buttonClass, setButtonClass] = useState('');
 	const [buttonLabel, setButtonLabel] = useState('Listen Live!');
 	const [cueLabel, setCueLabel] = useState('');
 
 	useEffect(() => {
+		console.log('status change', playerState.status);
+		setButtonClass('');
 		switch (playerState.status) {
 			case stream_status.LIVE_BUFFERING:
 				setIconState('pause');
+				setButtonClass('buffering');
 				setButtonLabel('Buffering…');
 				break;
 			case stream_status.LIVE_CONNECTING:
 				setIconState('pause');
-				setButtonLabel('Connecting…');
+				setButtonClass('buffering');
+				setButtonLabel('Connecting');
 				break;
 			case stream_status.LIVE_RECONNECTING:
 				setIconState('pause');
-				setButtonLabel('Reconnecting…');
+				setButtonLabel('Reconnecting');
 				break;
 			case stream_status.LIVE_FAILED:
 				setIconState('play');
@@ -76,11 +81,8 @@ export const ListenLiveButton = (props) => {
 					playerState.station_data[playerState.current_station]?.name
 				) {
 					setButtonLabel(
-						`Now: ${
-							playerState.station_data[
-								playerState.current_station
-							].name
-						}`
+						playerState.station_data[playerState.current_station]
+							.name
 					);
 				} else {
 					setButtonLabel('Now Playing');
@@ -92,6 +94,7 @@ export const ListenLiveButton = (props) => {
 				} else {
 					setIconState('open');
 				}
+				setButtonClass('big-text');
 				setButtonLabel('Listen Live!');
 		}
 	}, [
@@ -117,7 +120,8 @@ export const ListenLiveButton = (props) => {
 		if (artist === title) {
 			label = [artist];
 		}
-		setCueLabel(label.join(' – '));
+		const combinedLabel = label.join(' – ');
+		setCueLabel(combinedLabel);
 	}, [playerState.station_data]);
 
 	const handleClick = () => {
@@ -136,17 +140,7 @@ export const ListenLiveButton = (props) => {
 	return (
 		<div
 			id="listen-live"
-			class={`
-				${playerState.playing ? 'playing' : ''}
-				${
-					[
-						stream_status.LIVE_CONNECTING,
-						stream_status.LIVE_BUFFERING,
-					].includes(playerState.status)
-						? 'buffering'
-						: ''
-				}
-			`}
+			class={buttonClass}
 			aria-label={
 				(playerState.playing && 'Stop streaming') || 'Play stream'
 			}
@@ -159,20 +153,30 @@ export const ListenLiveButton = (props) => {
 				{iconState === 'pause' && <FaPause />}
 			</div>
 			<div class="status">
-				<h1>{buttonLabel}</h1>
-				{playerState.playing && (
+				<h1
+					class={`
+						${buttonLabel.length > 25 ? 'scroll' : ''}
+					`}
+					data-label={buttonLabel}
+					style={`--speed: ${buttonLabel.length / 3}s`}
+				>
+					{buttonLabel}
+				</h1>
+				{playerState.playing && cueLabel.length ? (
 					<h2>
 						<div
 							class={`
 								onair
 								${cueLabel.length > 25 ? 'scroll' : ''}
 							`}
-							data-onair={cueLabel}
+							data-label={cueLabel}
 							style={`--speed: ${cueLabel.length / 3}s`}
 						>
 							{cueLabel}
 						</div>
 					</h2>
+				) : (
+					''
 				)}
 			</div>
 		</div>

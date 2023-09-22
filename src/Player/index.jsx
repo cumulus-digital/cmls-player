@@ -32,8 +32,8 @@ export const Player = (props) => {
 		if (children) {
 			children.forEach((child) => {
 				if (child?.type === 'station' && child?.props?.mount) {
-					const { mount, name, logo, vast } = child.props;
-					const station = { mount, name, logo, vast };
+					const { mount, name, tagline, logo, vast } = child.props;
+					const station = { mount, name, tagline, logo, vast };
 					dispatch(
 						playerStateActions['set/station/data']({
 							[child.props.mount]: station,
@@ -80,7 +80,6 @@ export const Player = (props) => {
 		'./player.scss?inline'
 	).then((style) => {
 		if (style?.default?.use) {
-			console.log(me.current);
 			style.default.use({ target: me.current.firstChild });
 		}
 	});
