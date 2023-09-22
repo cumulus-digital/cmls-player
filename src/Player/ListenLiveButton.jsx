@@ -63,6 +63,7 @@ export const ListenLiveButton = (props) => {
 				setButtonClass('buffering');
 				setButtonLabel('Buffering…');
 				break;
+			case stream_status.LIVE_PREROLL:
 			case stream_status.LIVE_CONNECTING:
 				setIconState('pause');
 				setButtonClass('buffering');

@@ -27,7 +27,7 @@ cmls-player {
 #listen-live {
 	display: inline-flex;
 	align-items: center;
-	gap: 0.4em;
+	gap: 0.75em;
 
 	background-color: var(--backgroundColor, #e00);
 	background-image: linear-gradient(
@@ -42,6 +42,8 @@ cmls-player {
 	border-radius: 2px;
 	box-shadow: -1px -1px 2px rgba(0, 0, 0, 0.1) inset;
 	padding: 0.65em 1em;
+
+	line-height: 1.15;
 
 	cursor: pointer;
 
@@ -75,6 +77,7 @@ cmls-player {
 	}
 	&.big-text h1 {
 		font-size: 2em !important;
+		line-height: 1;
 		text-transform: uppercase;
 		text-shadow: 2px 2px 1px rgba(0, 0, 0, 0.1);
 		transition: font-size 0s;
@@ -82,6 +85,7 @@ cmls-player {
 	h2 {
 		font-size: 1em;
 		font-weight: normal;
+		letter-spacing: 0.04ch;
 	}
 
 	.icon {
@@ -96,11 +100,12 @@ cmls-player {
 
 		height: 35px;
 		width: 35px;
-		margin-right: 0.5em;
 		position: relative;
 		z-index: 2;
 
 		border-radius: 100%;
+
+		line-height: 1;
 
 		svg {
 			display: block;
@@ -309,6 +314,7 @@ cmls-player {
 
 		.playlist-list {
 			font-size: 11.5px;
+			letter-spacing: 0.05ch;
 
 			li {
 				display: flex;

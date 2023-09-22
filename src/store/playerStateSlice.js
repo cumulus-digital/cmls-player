@@ -102,8 +102,12 @@ export const playerStateSlice = createSlice({
 		},
 		'action/stop': (state, action) => {
 			state.playing = false;
+			state.current_station = null;
 		},
 		'action/toggle': (state, action) => {
+			if (!state.playing) {
+				state.current_station = null;
+			}
 			state.playing = !state.playing;
 		},
 		setPlayerState: (state, action) => {

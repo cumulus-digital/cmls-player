@@ -180,7 +180,7 @@ export function TritonSdkConnector(props) {
 			playerState.current_station &&
 			playerState.station_data[playerState.current_station].tagline
 		) {
-			cuedata.artist =
+			cuedata.title =
 				playerState.station_data[playerState.current_station].tagline;
 		}
 		dispatch(playerStateActions['set/station/cuepoint'](cuedata));
@@ -237,6 +237,9 @@ export function TritonSdkConnector(props) {
 			const vast_url = playerState.station_data[current_station]?.vast;
 			if (vast_url) {
 				log.debug('Playing ad', vast_url);
+				dispatch(
+					playerStateActions['set/status'](stream_status.LIVE_PREROLL)
+				);
 				player.playAd('vastAd', { url: vast_url });
 				return;
 			}
