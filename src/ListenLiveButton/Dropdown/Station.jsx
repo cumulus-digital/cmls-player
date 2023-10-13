@@ -10,6 +10,7 @@ import store from 'Store';
 import { playerStateActions, playerStateSelect } from 'Store/playerStateSlice';
 
 import ScrollLabel from '../ScrollLabel';
+import Artwork from '../Artwork';
 
 export default memo((props) => {
 	const playerState = useSelector(playerStateSelect);
@@ -82,10 +83,19 @@ export default memo((props) => {
 				<div class="tagline">{props.tagline}</div>
 				{props?.cuepoint?.type?.includes('track') && (
 					<div class="nowplaying">
-						<h3>Now Playing:</h3>
-						{[props.cuepoint.artist, props.cuepoint.title].join(
-							' – '
-						)}
+						<Artwork
+							url={props.cuepoint.artwork}
+							alt={`Album cover for ${[
+								props.cuepoint.artist,
+								props.cuepoint.title,
+							].join(' – ')}`}
+						/>
+						<div>
+							<h3>Now Playing:</h3>
+							{[props.cuepoint.artist, props.cuepoint.title].join(
+								' – '
+							)}
+						</div>
 					</div>
 				)}
 			</div>

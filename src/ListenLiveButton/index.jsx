@@ -37,7 +37,8 @@ export default memo((props) => {
 	const [buttonStateLabel, setButtonStateLabel] = useState('Listen Live!');
 	const [showCueLabel, setShowCueLabel] = useState(false);
 	const [cueLabel, setCueLabel] = useState('');
-	const [buttonHeight, setButtonHeight] = useState(0);
+
+	const [buttonBottom, setButtonBottom] = useState('55px');
 
 	const ref = useRef(null);
 
@@ -185,6 +186,15 @@ export default memo((props) => {
 		}
 	}, [playerState.station_data]);
 
+	useEffect(() => {
+		setInterval(() => {
+			const rect = ref.current.querySelector('.listen-live-button');
+			if (rect) {
+				setButtonBottom(rect.offsetTop + rect.offsetHeight + 'px');
+			}
+		}, 150);
+	}, []);
+
 	return (
 		<div
 			ref={ref}
@@ -195,6 +205,7 @@ export default memo((props) => {
 				${statusClass}
 			`}
 			onKeyDown={handleKeyDown}
+			style={`--buttonBottom: ${buttonBottom}`}
 		>
 			{playerState.ready && (
 				<>

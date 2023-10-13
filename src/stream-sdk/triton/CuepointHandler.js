@@ -1,6 +1,8 @@
 import store from 'Store';
 import { playerStateActions } from 'Store/playerStateSlice';
 
+import { fetchItunesArtwork } from 'Utils/iTunesHelper';
+
 import config from 'Config';
 import fixSassJson from 'Utils/fixSassJson';
 config = fixSassJson(config);
@@ -26,10 +28,10 @@ export const initTrackCuePointHandler = (newPlayer) => {
 	player = newPlayer;
 
 	const listeners = {
-		'track-cue-point': onTrackCuePoint,
-		'speech-cue-point': onSpeechCuePoint,
-		'ad-break-cue-point': onAdBreakCuePointStart,
-		'ad-break-cue-point-complete': onAdBreakCuePointComplete,
+		'track-cue-point': onTrackCuePoint.bind(this),
+		'speech-cue-point': onSpeechCuePoint.bind(this),
+		'ad-break-cue-point': onAdBreakCuePointStart.bind(this),
+		'ad-break-cue-point-complete': onAdBreakCuePointComplete.bind(this),
 	};
 
 	for (let ev in listeners) {
@@ -221,6 +223,32 @@ export const setCuePoint = (mount, cuePoint = {}) => {
 
 	if (cueData?.type?.includes('track')) {
 		updateLastTrackCuepointReceived(mount);
+
+		// Fetch artwork
+		fetchItunesArtwork(cueData.artist, cueData.title)
+			.then((artUrl) => {
+				if (artUrl?.length) {
+					log.debug('Got artwork', artUrl);
+					store.dispatch(
+						playerStateActions['set/station/cuepoint/artwork']({
+							[mount]: artUrl,
+						})
+					);
+				} else {
+					store.dispatch(
+						playerStateActions['set/station/cuepoint/artwork']({
+							[mount]: '',
+						})
+					);
+				}
+			})
+			.catch((e) => {
+				store.dispatch(
+					playerStateActions['set/station/cuepoint/artwork']({
+						[mount]: '',
+					})
+				);
+			});
 	}
 };
 

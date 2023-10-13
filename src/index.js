@@ -27,7 +27,7 @@ config = fixSassJson(config);
 import ListenLiveButton from './ListenLiveButton';
 import { playerStateActions } from './store/playerStateSlice';
 
-import './stream-sdk';
+import './stream-sdk/triton';
 
 import(
 	/* webpackChunkName: 'cmls-player' */
@@ -116,7 +116,7 @@ const CmlsPlayerProvider = (props) => {
 	useEffect(() => {
 		let p = me.current.base;
 		setButtonHeight(p.getBoundingClientRect()?.height);
-	}, []);
+	});
 
 	/**
 	 * Handle click events outside our component

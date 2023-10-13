@@ -28,10 +28,10 @@ export const initSDK = () => {
 
 	const tdPlayerConfig = {
 		...sdkConfig.td_player_config,
-		playerReady: onPlayerReady,
-		configurationError: onConfigError,
-		moduleError: onModuleError,
-		adBlockerDetected: adBlockerDetected,
+		playerReady: onPlayerReady.bind(this),
+		configurationError: onConfigError.bind(this),
+		moduleError: onModuleError.bind(this),
+		adBlockerDetected: adBlockerDetected.bind(this),
 	};
 
 	player = new window.TDSdk(tdPlayerConfig);
@@ -57,6 +57,10 @@ const onPlayerReady = (e) => {
 
 	initTrackCuePointHandler(player);
 	initOfflineNowPlaying(player);
+
+	const { playerState } = store.getState();
+
+	log.debug('Modules configured.', playerState);
 };
 
 const onConfigError = (e) => {

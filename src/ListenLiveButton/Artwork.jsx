@@ -22,25 +22,30 @@ export default memo(
 		const playerState = useSelector(playerStateSelect);
 
 		useMemo(() => {
-			let cuepoint;
-			if (playerState.playing) {
-				cuepoint =
-					playerState.station_data?.[playerState.playing]?.cuepoint;
+			if (props.url) {
+				setArtUrl(props.url);
 			} else {
-				cuepoint =
-					playerState.station_data?.[playerState.station_primary]
-						?.cuepoint;
+				let cuepoint;
+				if (playerState.playing) {
+					cuepoint =
+						playerState.station_data?.[playerState.playing]
+							?.cuepoint;
+				} else {
+					cuepoint =
+						playerState.station_data?.[playerState.station_primary]
+							?.cuepoint;
+				}
+				if (
+					cuepoint &&
+					['track', 'offline-track'].includes(cuepoint.type) &&
+					cuepoint.artwork
+				) {
+					setArtUrl(cuepoint.artwork);
+				} else {
+					setArtUrl(false);
+				}
 			}
-			if (
-				cuepoint &&
-				['track', 'offline-track'].includes(cuepoint.type) &&
-				cuepoint.artwork
-			) {
-				setArtUrl(cuepoint.artwork);
-			} else {
-				setArtUrl(false);
-			}
-		}, [playerState.station_data]);
+		}, [props.url, playerState.station_data]);
 
 		return (
 			<>

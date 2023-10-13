@@ -114,10 +114,10 @@ export const searchItunes = (term) => {
 				if (data?.results?.length) {
 					return resolve(data);
 				}
-				return reject();
+				return reject('No data returned');
 			})
-			.catch(() => {
-				return reject();
+			.catch((e) => {
+				return reject(e);
 			})
 			.finally(() => {
 				clearTimeout(abort);
