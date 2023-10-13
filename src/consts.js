@@ -1,8 +1,8 @@
 export const stream_status = {
 	LIVE_STOP: 0,
-	LIVE_PAUSE: 0,
+	LIVE_PAUSE: -1,
 	LIVE_PLAYING: 1,
-	LIVE_FAILED: -1,
+	LIVE_FAILED: -2,
 	LIVE_PREROLL: 2,
 	LIVE_BUFFERING: 3,
 	LIVE_CONNECTING: 4,

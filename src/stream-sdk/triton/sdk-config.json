@@ -1,0 +1,17 @@
+{
+	"sdk_url": "'//sdk.listenlive.co/web/2.9/td-sdk.min.js'",
+	"mediaplayer_id_prefix": "cmlsmediaplayer",
+	"td_player_config": {
+		"coreModules": [
+			{
+				"id": "MediaPlayer",
+				"playerId": "cmlsmediaplayer-player",
+				"geoTargeting": {
+					"desktop": { "isActive": false }
+				},
+				"plugins": [{ "id": "vastAd" }]
+			},
+			{ "id": "NowPlayingApi" }
+		]
+	}
+}

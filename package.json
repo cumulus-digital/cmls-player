@@ -34,6 +34,7 @@
     "postcss-loader": "^7.3.3",
     "preact": "^10.17.1",
     "preact-custom-element": "^4.2.1",
+    "preact-slots": "^1.0.0",
     "prettier": "^2.6.2",
     "react-icons": "^4.11.0",
     "react-redux": "^8.1.2",

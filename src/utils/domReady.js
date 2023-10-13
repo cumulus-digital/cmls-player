@@ -1,7 +1,10 @@
 /**
- * Fire cb when readyState is "interactive" or better
+ * Determine when readyState is "interactive" or better.
+ *
+ * @param {function} [cb]
+ * @returns {Promise}
  */
-export const domReady = (cb) => {
+export const domReady = (cb = null) => {
 	const waiting = (resolve, reject) => {
 		if (window.self.document.readyState !== 'loading') {
 			if (cb) {

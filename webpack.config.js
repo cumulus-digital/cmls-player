@@ -69,6 +69,7 @@ module.exports = (env) => {
 			options: {
 				sourceMap: !isProduction,
 				sassOptions: {
+					webpackImporter: true,
 					importer: jsonInSassImporter(),
 				},
 			},
@@ -93,7 +94,10 @@ module.exports = (env) => {
 				'react-dom': 'preact/compat',
 				'react/jsx-runtime': 'preact/jsx-runtime',
 				'lodash-es': 'lodash',
+				Config: path.resolve(__dirname, 'src/config.json'),
+				Consts: path.resolve(__dirname, 'src/consts.js'),
 				Utils: path.resolve(__dirname, 'src/utils'),
+				Store: path.resolve(__dirname, 'src/store'),
 			},
 			extensions: ['.jsx', '.ts', '.tsx', '...'],
 		},
@@ -167,12 +171,11 @@ module.exports = (env) => {
 									options: {
 										injectType: 'lazyAutoStyleTag',
 										insert: (element, options) => {
-											const parent =
+											const target =
 												options && options.target
 													? options.target
 													: document.head;
-											parent.appendChild(element);
-											parent.appendChild(element);
+											target.appendChild(element);
 										},
 									},
 								},

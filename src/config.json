@@ -1,6 +1,9 @@
 {
 	"siteframe_id": "cmls_siteframe",
 	"sdk_div_id": "'cmls-player-sdk-connector'",
-	"sdk_url": "'//sdk.listenlive.co/web/2.9/td-sdk.min.js'",
-	"mediaplayer_id_prefix": "cmlsmediaplayer"
+	"mediaplayer_id_prefix": "cmlsmediaplayer",
+	"minutes_between_preroll": 0,
+	"fetch_artwork": false,
+	"offline_nowplaying_interval": 120000,
+	"max_unresolved_nowplaying_requests": 10
 }
