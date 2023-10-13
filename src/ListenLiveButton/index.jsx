@@ -28,11 +28,13 @@ import Dropdown from './Dropdown';
 import Artwork from './Artwork';
 import { memo } from 'preact/compat';
 
+import { SDK } from '../stream-sdk';
+
 export default memo((props) => {
 	const playerState = useSelector(playerStateSelect);
 	const dispatch = useDispatch();
 	const [isPlaying, setIsPlaying] = useState(false);
-	const [statusClass, setStatusClass] = useState('stopped');
+	const [statusClass, setStatusClass] = useState(new Set(['stopped']));
 	const [multiStation, setMultiStation] = useState(false);
 	const [buttonStateLabel, setButtonStateLabel] = useState('Listen Live!');
 	const [showCueLabel, setShowCueLabel] = useState(false);
@@ -76,66 +78,66 @@ export default memo((props) => {
 	const togglePlay = (e) => {
 		e.preventDefault();
 
-		if (!playerState.interactive) {
-			return;
-		}
-
 		if (playerState.playing) {
 			dispatch(playerStateActions['action/stop']());
+			//SDK.stop();
 			setIsPlaying(false);
 		} else {
+			/*
 			dispatch(
 				playerStateActions['action/play'](playerState.station_primary)
 			);
+			*/
+			SDK.play(playerState.station_primary);
 			setIsPlaying(true);
 		}
 	};
 
-	useEffect(() => {
-		dispatch(playerStateActions['set/interactive'](true));
-
-		return () => {
-			dispatch(playerStateActions['set/interactive'](false));
-		};
-	}, []);
-
 	useLayoutEffect(() => {
 		let newButtonLabel = `${buttonStateLabel}`;
 		let newCueLabel = `${cueLabel}`;
+
+		statusClass.delete('activity');
+		statusClass.delete('playing');
+		statusClass.delete('stopped');
+
 		switch (playerState.status) {
 			case stream_status.LIVE_PREROLL:
 			case stream_status.LIVE_CONNECTING:
 			case stream_status.LIVE_RECONNECTING:
-				setStatusClass('activity');
+				statusClass.add('activity');
 				newButtonLabel = 'Connecting…';
 				newCueLabel = 'The stream will begin momentarily…';
 				break;
 			case stream_status.LIVE_BUFFERING:
-				setStatusClass('activity');
+				statusClass.add('activity');
 				newButtonLabel = 'Buffering…';
 				newCueLabel = 'The stream will begin momentarily…';
 				break;
 			case stream_status.LIVE_PLAYING:
-				setStatusClass('playing');
+				statusClass.add('playing');
 				newButtonLabel =
 					playerState.station_data?.[playerState.playing]?.name ||
 					'Now Playing';
 				newCueLabel = '';
 				break;
 			case stream_status.LIVE_STOP:
-				setStatusClass('stopped');
+				statusClass.add('stopped');
 				newButtonLabel = 'Listen Live!';
 				newCueLabel = '';
 				break;
 			case stream_status.LIVE_FAILED:
+				statusClass.add('stopped');
 				newButtonLabel = 'Error!';
 				newCueLabel = 'Please try again later…';
 				break;
 			case stream_status.STATION_NOT_FOUND:
+				statusClass.add('stopped');
 				newButtonLabel = 'Error!';
 				newCueLabel = 'Station not found';
 				break;
 			case stream_status.PLAY_NOT_ALLOWED:
+				statusClass.add('stopped');
 				newButtonLabel = 'Not Allowed';
 				newCueLabel =
 					'Playback is not allowed. Please try again later.';
@@ -143,10 +145,13 @@ export default memo((props) => {
 			case stream_status.STREAM_GEO_BLOCKED:
 			case stream_status.STREAM_GEO_BLOCKED_ALTERNATE:
 			case stream_status.STREAM_GEO_BLOCKED_NO_ALTERNATE:
+				statusClass.add('stopped');
 				newButtonLabel = 'Unavailable';
 				newCueLabel =
 					'Sorry, this content is not available in your area';
 		}
+
+		setStatusClass(statusClass);
 
 		const cuePointSource =
 			playerState.playing || playerState.station_primary;
@@ -195,6 +200,15 @@ export default memo((props) => {
 		}, 150);
 	}, []);
 
+	useEffect(() => {
+		if (playerState.interactive) {
+			statusClass.add('interactive');
+		} else {
+			statusClass.delete('interactive');
+		}
+		setStatusClass(statusClass);
+	}, [playerState.interactive]);
+
 	return (
 		<div
 			ref={ref}
@@ -202,7 +216,7 @@ export default memo((props) => {
 				listen-live-container
 				${multiStation && 'multi-station'}
 				${showCueLabel && cueLabel?.length && 'has-cue-label'}
-				${statusClass}
+				${Array.from(statusClass).join(' ')}
 			`}
 			onKeyDown={handleKeyDown}
 			style={`--buttonBottom: ${buttonBottom}`}
@@ -217,6 +231,7 @@ export default memo((props) => {
 						role="button"
 						tabindex="0"
 						aria-pressed={playerState.playing}
+						disabled={!playerState.interactive}
 					>
 						<PlayIcon />
 

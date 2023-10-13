@@ -2,6 +2,7 @@
 	"compilerOptions": {
 		"baseUrl": ".",
 		"paths": {
+			"@/*": ["./src/*"],
 			"Config": ["./src/config.json"],
 			"Consts": ["./src/consts.js"],
 			"Utils/*": ["./src/utils/*"],

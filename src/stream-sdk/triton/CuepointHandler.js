@@ -134,7 +134,7 @@ export const onAdBreakCuePointStart = (e) => {
 	log.debug('Ad break start', { event: e, state: playerState });
 
 	setCuePoint(playerState.playing, {
-		artistName: station?.name || '',
+		artistName: station?.tagline || '',
 		cueTitle: "We'll return after these messages",
 		type: 'ad',
 	});

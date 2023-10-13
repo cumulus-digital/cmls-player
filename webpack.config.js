@@ -94,6 +94,7 @@ module.exports = (env) => {
 				'react-dom': 'preact/compat',
 				'react/jsx-runtime': 'preact/jsx-runtime',
 				'lodash-es': 'lodash',
+				'@': path.resolve(__dirname, 'src'),
 				Config: path.resolve(__dirname, 'src/config.json'),
 				Consts: path.resolve(__dirname, 'src/consts.js'),
 				Utils: path.resolve(__dirname, 'src/utils'),

@@ -8,4 +8,5 @@ config = fixSassJson(config);
 import Logger from 'Utils/Logger';
 const log = new Logger('Triton SDK / MediaPlayer');
 
-import './triton';
+import { TritonSDK } from './triton';
+export const SDK = TritonSDK;

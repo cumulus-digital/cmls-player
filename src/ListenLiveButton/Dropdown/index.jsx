@@ -28,13 +28,13 @@ export default (props) => {
 	const containerRef = createRef();
 	const containerId = useId();
 
-	const handleKeyboardActivation = useCallback((expanded) => {
-		if (expanded) {
+	const handleActivation = (focusFirst) => {
+		if (focusFirst) {
 			setFocusFirstStation(true);
 		} else {
 			setFocusFirstStation(null);
 		}
-	}, []);
+	};
 
 	return (
 		<>
@@ -43,7 +43,7 @@ export default (props) => {
 				ref={handleRef}
 				containerRef={containerRef}
 				containerId={containerId}
-				onKeyboardActivation={handleKeyboardActivation}
+				onInteraction={handleActivation}
 			/>
 			<Container
 				id={containerId}

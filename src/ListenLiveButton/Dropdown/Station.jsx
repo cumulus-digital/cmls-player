@@ -12,6 +12,8 @@ import { playerStateActions, playerStateSelect } from 'Store/playerStateSlice';
 import ScrollLabel from '../ScrollLabel';
 import Artwork from '../Artwork';
 
+import { SDK } from '@/stream-sdk';
+
 export default memo((props) => {
 	const playerState = useSelector(playerStateSelect);
 	const dispatch = useDispatch();
@@ -26,22 +28,16 @@ export default memo((props) => {
 	const toggleStation = (e) => {
 		e.preventDefault();
 
-		if (!playerState.interactive) {
-			return;
-		}
-
 		if (playerState.playing === props.mount) {
-			dispatch(playerStateActions['action/stop']());
+			//dispatch(playerStateActions['action/stop']());
+			SDK.stop();
 		} else {
-			dispatch(playerStateActions['action/play'](props.mount));
+			//dispatch(playerStateActions['action/play'](props.mount));
+			SDK.play(props.mount);
 		}
 	};
 
 	const handleKeyDown = (e) => {
-		if (!playerState.interactive) {
-			return;
-		}
-
 		const key = e.key;
 		switch (key) {
 			case ' ':
@@ -68,6 +64,7 @@ export default memo((props) => {
 			} ${props.name}`}
 			onClick={toggleStation}
 			tabIndex="0"
+			disabled={!playerState.interactive}
 		>
 			<div class="logo">
 				<img src={props.logo} alt={`${props.name} Logo`} />
@@ -75,7 +72,7 @@ export default memo((props) => {
 					<FaPause className="overlay" />
 				)) || <FaPlay className="overlay" />}
 			</div>
-			<div>
+			<div class="info">
 				{playerState.playing === props.mount && (
 					<em class="is_playing">Streaming</em>
 				)}
@@ -83,13 +80,15 @@ export default memo((props) => {
 				<div class="tagline">{props.tagline}</div>
 				{props?.cuepoint?.type?.includes('track') && (
 					<div class="nowplaying">
-						<Artwork
-							url={props.cuepoint.artwork}
-							alt={`Album cover for ${[
-								props.cuepoint.artist,
-								props.cuepoint.title,
-							].join(' – ')}`}
-						/>
+						{props.cuepoint.artwork && (
+							<Artwork
+								url={props.cuepoint.artwork}
+								alt={`Album cover for ${[
+									props.cuepoint.artist,
+									props.cuepoint.title,
+								].join(' – ')}`}
+							/>
+						)}
 						<div>
 							<h3>Now Playing:</h3>
 							{[props.cuepoint.artist, props.cuepoint.title].join(

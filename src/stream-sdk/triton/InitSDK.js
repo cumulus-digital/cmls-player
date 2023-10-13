@@ -15,11 +15,11 @@ import { stream_status } from 'Consts';
 import { initTrackCuePointHandler } from './CuepointHandler';
 import { initOfflineNowPlaying } from './NowPlayingHandler';
 
-export let player;
+let player;
 
 window._CMLS = window._CMLS || {};
 
-export const initSDK = () => {
+export const initSDK = (sdkInstance) => {
 	if (!window.TDSdk) {
 		throw new Error(
 			'initSDK called without window.TDSdk available! Triton SDK must be included.'
@@ -34,7 +34,7 @@ export const initSDK = () => {
 		adBlockerDetected: adBlockerDetected.bind(this),
 	};
 
-	player = new window.TDSdk(tdPlayerConfig);
+	player = sdkInstance.setPlayer(new window.TDSdk(tdPlayerConfig));
 	window._CMLS.webplayer_instance = player;
 	log.debug('SDK Initialized', tdPlayerConfig, player);
 };

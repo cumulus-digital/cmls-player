@@ -22,8 +22,122 @@ const log = new Logger('Triton SDK');
 import { initSDK, player } from './InitSDK';
 import { MediaPlayer } from './MediaPlayer';
 
-let mediaPlayerInstance;
+export class TritonSDK {
+	static player;
+	static mediaPlayer;
+	static scriptTag;
+	static ready = false;
+	static interactive = false;
 
+	static previouslyPlayed = false;
+
+	static init(scriptUrl) {
+		//if (isParentWindow()) {
+		this.scriptTag = document.createElement('script');
+		this.scriptTag.setAttribute('async', true);
+		this.scriptTag.setAttribute('src', scriptUrl);
+		this.scriptTag.onload = (e) => {
+			initSDK(this);
+			this.mediaPlayer = new MediaPlayer(this.player, this.playStation);
+			store.dispatch(playerStateActions['set/interactive'](true));
+		};
+		window.self.document.head.appendChild(this.scriptTag);
+
+		// Handle stop requests across tabs
+		store.subscribe(() => {
+			const { playerState } = store.getState();
+
+			if (!this.player) {
+				return;
+			}
+
+			if (this.previouslyPlayed !== playerState.playing) {
+				this.previouslyPlayed = playerState.playing;
+
+				if (!playerState.playing) {
+					this.stop();
+				}
+			}
+
+			if (this.interactive !== playerState.interactive) {
+				this.interactive = playerState.interactive;
+			}
+		});
+		//}
+	}
+
+	static setPlayer(player) {
+		this.player = player;
+		return this.player;
+	}
+	static getPlayer() {
+		return this.player;
+	}
+
+	static isReady() {
+		return this.ready;
+	}
+
+	static isInteractive() {
+		const { playerState } = store.getState();
+		return this.ready && playerState.interactive;
+	}
+
+	static isPlaying() {
+		const { playerState } = store.getState();
+		return !!playerState.playing;
+	}
+
+	static play(mount) {
+		const { playerState } = store.getState();
+
+		if (!mount) {
+			mount = playerState.station_primary;
+		}
+
+		/*
+		if (!isPlaying()) {
+			return;
+		}
+		*/
+
+		if (this.isPlaying()) {
+			this.stop();
+		}
+
+		log.debug('Play station!', { state: playerState });
+		store.dispatch(playerStateActions['set/playing'](mount));
+		store.dispatch(playerStateActions['set/interactive'](false));
+
+		this.mediaPlayer.playVastAd(
+			playerState.station_data[mount].vast,
+			() => {
+				this.beginStream(mount);
+			}
+		);
+	}
+
+	static beginStream(mount) {
+		this.player.play({
+			mount,
+			trackingParameters: { player: 'cmls-webplayer' },
+		});
+
+		store.dispatch(playerStateActions['set/interactive'](true));
+	}
+
+	static stop() {
+		const { playerState } = store.getState();
+
+		this.player.stop();
+
+		store.dispatch(playerStateActions['set/playing'](false));
+		store.dispatch(playerStateActions['set/interactive'](true));
+	}
+}
+TritonSDK.init(sdkConfig.sdk_url);
+
+/*
 if (isParentWindow()) {
 	// Inject script tag and media player
 	const scriptTag = document.createElement('script');
@@ -144,3 +258,4 @@ if (isParentWindow()) {
 		}
 	});
 }
+*/

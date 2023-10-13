@@ -52,6 +52,7 @@ export const playerStateSlice = createSlice({
 			state.ready = !!payload;
 		},
 		'set/interactive': (state, { payload }) => {
+			log.debug('set/interactive', payload);
 			state.interactive = !!payload;
 		},
 		'set/ad_blocker_detected': (state, { payload }) => {
@@ -269,10 +270,23 @@ export const playerStateSlice = createSlice({
 			}
 		},
 
+		/*
 		// Handle play calls
 		'action/play': (state, { payload }) => {
 			//log.debug('action/play', payload);
 			if (!payload || !state.station_data[payload]) {
+				log.error('Attempted to play an unregistered mount', payload);
+				throw new Error('Attempted to play an unregistered mount');
+			}
+			state.playing = payload;
+			for (let mount in state.station_data) {
+				state.station_data[mount].playing =
+					mount === payload ? true : false;
+			}
+		},
+		*/
+		'set/playing': (state, { payload }) => {
+			if (payload && !state.station_data[payload]) {
 				log.error('Attempted to play an unregistered mount', payload);
 				throw new Error('Attempted to play an unregistered mount');
 			}

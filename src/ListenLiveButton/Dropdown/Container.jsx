@@ -115,7 +115,7 @@ export default forwardRef((props, ref) => {
 		} else {
 			setFocusStation(null);
 		}
-	}, [playerState.dropdown_open]);
+	}, [playerState.dropdown_open, props?.focusFirstStation]);
 
 	return (
 		<div

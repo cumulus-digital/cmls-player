@@ -16,26 +16,29 @@ export default forwardRef((props, me) => {
 	const handleClick = (e) => {
 		e.preventDefault();
 
-		if (playerState.interactive) {
-			dispatch(playerStateActions['action/dropdown-toggle']());
-		}
+		//if (playerState.interactive) {
+		dispatch(playerStateActions['action/dropdown-toggle']());
+		me.current.focus();
+		//}
 	};
 
 	const openDropdown = () => {
-		if (playerState.interactive) {
-			dispatch(playerStateActions['action/dropdown-open']());
-		}
+		//if (playerState.interactive) {
+		dispatch(playerStateActions['action/dropdown-open']());
+		props?.onInteraction(true);
+		//}
 	};
 	const closeDropdown = () => {
-		if (playerState.interactive) {
-			dispatch(playerStateActions['action/dropdown-close']());
-		}
+		//if (playerState.interactive) {
+		dispatch(playerStateActions['action/dropdown-close']());
+		props?.onInteraction(false);
+		//}
 	};
 
 	const handleKeyDown = (e) => {
-		if (!playerState.interactive) {
-			return;
-		}
+		//if (!playerState.interactive) {
+		//	return;
+		//}
 
 		const key = e.key;
 		let stopBubble = false;
@@ -47,23 +50,19 @@ export default forwardRef((props, me) => {
 				stopBubble = true;
 				if (playerState.dropdown_open) {
 					closeDropdown();
-					props?.onKeyboardActivation(false);
 				} else {
 					openDropdown();
-					props?.onKeyboardActivation(true);
 				}
 				break;
 			case 'ArrowDown':
 			case 'Down':
 				stopBubble = true;
 				openDropdown();
-				props?.onKeyboardActivation(true);
 				break;
 			case 'Up':
 			case 'ArrowUp':
 				stopBubble = true;
 				closeDropdown();
-				props?.onKeyboardActivation(false);
 				break;
 		}
 
@@ -89,6 +88,7 @@ export default forwardRef((props, me) => {
 			aria-haspopup="true"
 			aria-expanded={playerState.dropdown_open ? true : null}
 			aria-controls={props.containerId}
+			disabled={!playerState.interactive}
 		>
 			{playerState.dropdown_open ? <FaAngleUp /> : <FaAngleDown />}
 		</button>
