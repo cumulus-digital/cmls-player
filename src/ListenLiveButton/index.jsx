@@ -188,7 +188,7 @@ export default memo((props) => {
 
 	useEffect(() => {
 		setInterval(() => {
-			const rect = ref.current.querySelector('.listen-live-button');
+			const rect = ref.current;
 			if (rect) {
 				setButtonBottom(rect.offsetTop + rect.offsetHeight + 'px');
 			}
