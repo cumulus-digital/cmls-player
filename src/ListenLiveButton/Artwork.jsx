@@ -61,7 +61,7 @@ export default memo(
 		);
 	},
 	(prevProps, nextProps) => {
-		const shouldRerender = ['artUrl', 'class', 'alt'].some(
+		const shouldRerender = ['url', 'class', 'alt'].some(
 			(k) => prevProps?.[k] !== nextProps?.[k]
 		);
 		return !shouldRerender;
