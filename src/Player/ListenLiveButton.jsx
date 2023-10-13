@@ -55,7 +55,6 @@ export const ListenLiveButton = (props) => {
 	const [cueLabel, setCueLabel] = useState('');
 
 	useEffect(() => {
-		console.log('status change', playerState.status);
 		setButtonClass('');
 		switch (playerState.status) {
 			case stream_status.LIVE_BUFFERING:

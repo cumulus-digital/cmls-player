@@ -157,7 +157,7 @@ export function TritonSdkConnector(props) {
 		if (typeof e?.data?.cuePoint === 'undefined') {
 			return;
 		}
-		console.debug('Track cue point received', e);
+		log.debug('Track cue point received', e);
 		dispatch(
 			playerStateActions['set/station/cuepoint']({
 				artist: e.data.cuePoint?.artistName || null,
@@ -259,7 +259,10 @@ export function TritonSdkConnector(props) {
 			throw new Error('startPlay called without a current station');
 		}
 
-		player.play({ mount: playerState.current_station });
+		player.play({
+			mount: playerState.current_station,
+			trackingParameters: { player: 'cmls-webplayer' },
+		});
 	};
 	const stopPlay = (e) => {
 		['ad-playback-complete', 'ad-playback-error'].forEach((k) => {
@@ -305,37 +308,51 @@ export function TritonSdkConnector(props) {
 	 */
 	let fetchingNowPlaying = null;
 	useEffect(() => {
-		clearInterval(fetchingNowPlaying);
-		fetchingNowPlaying = null;
+		const clearPlaylists = () => {
+			const { playerState } = store.getState();
+			Object.values(playerState.station_data).forEach((station) => {
+				if (
+					station?.playlist?.length &&
+					station.mount !== playerState.current_station
+				) {
+					log.debug('Clearing playlist data', station.mount);
+					dispatch(
+						playerStateActions['set/station/playlist']({
+							station: station.mount,
+						})
+					);
+				}
+			});
+			clearInterval(fetchingNowPlaying);
+			fetchingNowPlaying = false;
+		};
 
 		if (playerState.playing) {
 			log.debug(
-				'Starting NowPlaying interval',
+				'Starting playlist load interval',
 				playerState.current_station
 			);
 			fetchingNowPlaying = setInterval(() => {
+				const { playerState } = store.getState();
 				if (playerState.playing && playerState.current_station) {
 					log.debug(
-						'Refreshing NowPlaying',
+						'Refreshing playlist',
 						playerState.current_station
 					);
 					fetchNowPlaying(playerState.current_station);
 				} else {
-					dispatch(playerStateActions['set/station/playlist']());
+					log.debug('Killing playlist interval');
+					clearPlaylists();
 				}
 			}, 30000);
 			fetchNowPlaying(playerState.current_station);
+		} else {
+			clearPlaylists();
 		}
-		Object.values(playerState.station_data).forEach((station) => {
-			if (station.mount !== playerState.currentStation) {
-				log.debug('Clearing NowPlaying data', station.mount);
-				dispatch(
-					playerStateActions['set/station/playlist']({
-						station: station.mount,
-					})
-				);
-			}
-		});
+
+		return () => {
+			clearPlaylists();
+		};
 	}, [playerState.current_station, playerState.playing]);
 	/*
 	useEffect(() => {
