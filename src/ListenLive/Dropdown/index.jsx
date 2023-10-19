@@ -27,11 +27,11 @@ export default function Dropdown(props) {
 
 	useEffect(() => {
 		const watcher = setInterval(() => {
-			const rect =
-				handleRef?.current?.parentElement?.getBoundingClientRect();
+			const rect = handleRef?.current?.parentElement;
 			if (rect) {
-				appState.dropdown_position.value = rect.bottom;
-				appState.button_right.value = rect.right;
+				appState.dropdown_position.value =
+					rect.offsetTop + rect.offsetHeight;
+				appState.button_right.value = rect.offsetLeft;
 			}
 		}, 100);
 
