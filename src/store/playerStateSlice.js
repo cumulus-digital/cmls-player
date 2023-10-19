@@ -1,326 +1,371 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSelector, createSlice } from '@reduxjs/toolkit';
+
+import store from '.';
 
 import config from 'Config';
 
-import Logger from 'Utils/Logger';
+//import Logger from 'Utils/Logger';
+//const log = new Logger('Player Store');
 
-const log = new Logger('Player Store');
+import { Station } from './Station';
+import { CuePoint } from './CuePoint';
 
-let stationTemplate = {
-	mount: '',
-	name: '',
-	tagline: '',
-	logo: '',
-	vast: '',
-	primary: false,
-	fetch_nowplaying: true,
-	unresolved_nowplaying_requests: 0,
-	last_track_cuepoint_received: null,
-	cuepoint: {
-		artist: '',
-		title: '',
-		track_id: '',
-		artwork: '',
-		type: '',
-	},
-};
+import { stream_status } from 'Consts';
+import { appSignals } from '@/signals';
 
-export const playerStateSlice = createSlice({
+const playerStateSlice = createSlice({
 	name: 'playerState',
 	initialState: {
-		sdk: 'triton',
-		ready: false,
+		//sdk: 'triton',
+		//ready: false,
+		//ad_blocker_detected: false,
+		minutes_between_preroll: config.minutes_between_preroll || 5,
+		last_preroll: null,
+		fetch_nowplaying: true,
+
+		interactive: true,
+		show_cue_label: true,
+		//dropdown_open: false,
+		//dropdown_position: 0,
+
 		playing: false,
-		interactive: false,
 		status: 0,
 		stations: [],
-		station_primary: null,
-		station_data: {},
-		ad_blocker_detected: false,
-		dropdown_open: false,
-		fetch_nowplaying: null,
-		offline_cuelabel: true,
-
-		minutes_between_preroll: config.minutes_between_preroll,
-		last_preroll: null,
+		cuepoints: {},
+		primary_station: null,
+		active_station: null,
 	},
 	reducers: {
-		'set/sdk': (state, action) => {
-			state.sdk = action.payload;
+		/*
+		'set/sdk': (state, { payload }) => {
+			state.sdk = !!payload;
 		},
 		'set/ready': (state, { payload }) => {
 			state.ready = !!payload;
 		},
-		'set/interactive': (state, { payload }) => {
-			log.debug('set/interactive', payload);
-			state.interactive = !!payload;
-		},
 		'set/ad_blocker_detected': (state, { payload }) => {
 			state.ad_blocker_detected = !!payload;
 		},
-		'set/status': (state, { payload }) => {
-			//log.debug('set/status', payload);
-			state.status = payload;
-		},
-
-		'set/offline_cuelabel': (state, { payload }) => {
-			state.offline_cuelabel = !!payload;
-		},
-
+		*/
 		'set/minutes_between_preroll': (state, { payload }) => {
-			if (Number.isInteger(payload)) {
-				state.minutes_between_preroll = payload;
-			} else {
-				state.minutes_between_preroll =
-					config.minutes_between_preroll || 0;
-			}
+			state.minutes_between_preroll = payload;
 		},
 		'set/last_preroll': (state, { payload }) => {
-			if (typeof payload === 'date' || payload instanceof Date) {
-				state.last_preroll = payload.now();
-			} else if (Number.isInteger(payload)) {
-				state.last_preroll = payload;
-			} else {
-				state.last_preroll = null;
-			}
+			state.last_preroll = payload;
 		},
 
-		// Set station data
-		'set/station': (state, { payload }) => {
-			//log.debug('set/station', payload);
-			const station_data = { ...state.station_data };
-			for (let mount in payload) {
-				if (!station_data[mount]) {
-					station_data[mount] = {
-						...stationTemplate,
-						...payload[mount],
-					};
-				} else {
-					station_data[mount] = {
-						...stationTemplate,
-						...station_data[mount],
-						...payload[mount],
-					};
-				}
-			}
-			state.station_data = station_data;
+		'set/interactive': (state, { payload }) => {
+			state.interactive = !!payload;
 		},
-		'set/station/primary': (state, { payload }) => {
-			//log.debug('set/station/primary', payload);
-			state.station_primary = payload;
+
+		'set/fetch_nowplaying': (state, { payload }) => {
+			state.fetch_nowplaying = !!payload;
 		},
-		'set/station/cuepoint': (state, { payload }) => {
-			for (let mount in payload) {
-				if (!state.station_data[mount]) {
-					throw new Error(
-						'Attempted to set cuepoint for an unregistered mount.'
-					);
-				}
-				state.station_data[mount].cuepoint = {
-					...stationTemplate.cuepoint,
-					...state.station_data[mount].cuepoint,
-					...payload[mount],
-				};
-			}
-		},
-		'set/station/cuepoint/artist': (state, { payload }) => {
-			//log.debug('set/station/cuepoint/artist', payload);
-			for (let mount in payload) {
-				if (!state.station_data[mount]) {
-					throw new Error(
-						'Attempted to set cuepoint artist for an unregistered mount.'
-					);
-				}
-				state.station_data[mount].cuepoint = {
-					...stationTemplate.cuepoint,
-					...state.station_data[mount].cuepoint,
-					artist: payload[mount],
-				};
-			}
-		},
-		'set/station/cuepoint/title': (state, { payload }) => {
-			//log.debug('set/station/cuepoint/title', payload);
-			for (let mount in payload) {
-				if (!state.station_data[mount]) {
-					throw new Error(
-						'Attempted to set cuepoint title for an unregistered mount.'
-					);
-				}
-				state.station_data[mount].cuepoint = {
-					...stationTemplate.cuepoint,
-					...state.station_data[mount].cuepoint,
-					title: payload[mount],
-				};
-			}
-		},
-		'set/station/cuepoint/track_id': (state, { payload }) => {
-			//log.debug('set/station/cuepoint/track_id', payload);
-			for (let mount in payload) {
-				if (!state.station_data[mount]) {
-					throw new Error(
-						'Attempted to set cuepoint track_id for an unregistered mount.'
-					);
-				}
-				state.station_data[mount].cuepoint = {
-					...stationTemplate.cuepoint,
-					...state.station_data[mount].cuepoint,
-					track_id: payload[mount],
-				};
-			}
-		},
-		'set/station/cuepoint/type': (state, { payload }) => {
-			//log.debug('set/station/cuepoint/type', payload);
-			for (let mount in payload) {
-				if (!state.station_data[mount]) {
-					throw new Error(
-						'Attempted to set cuepoint type for an unregistered mount.'
-					);
-				}
-				state.station_data[mount].cuepoint = {
-					...stationTemplate.cuepoint,
-					...state.station_data[mount].cuepoint,
-					type: payload[mount],
-				};
-			}
-		},
-		'set/station/cuepoint/artwork': (state, { payload }) => {
-			//log.debug('set/station/cuepoint/artwork', payload);
-			for (let mount in payload) {
-				if (!state.station_data[mount]) {
-					throw new Error(
-						'Attempted to set cuepoint artwork for an unregistered mount.'
-					);
-				}
-				state.station_data[mount].cuepoint = {
-					...stationTemplate.cuepoint,
-					...state.station_data[mount].cuepoint,
-					artwork: payload[mount],
-				};
-			}
-		},
-		'set/station/fetch_nowplaying': (state, { payload }) => {
-			//log.debug('set/station/fetch_nowplaying', payload);
-			for (let mount in payload) {
-				if (!state.station_data[mount]) {
-					throw new Error(
-						'Attempted to set unresolved_nowplaying_requests for an unregistered mount.'
-					);
-				}
-				state.station_data[mount].fetch_nowplaying = !!payload[mount];
-			}
-		},
-		'set/station/unresolved_nowplaying_requests': (state, { payload }) => {
-			//log.debug('set/station/unresolved_nowplaying_requests', payload);
-			for (let mount in payload) {
-				if (!state.station_data[mount]) {
-					throw new Error(
-						'Attempted to set unresolved_nowplaying_requests for an unregistered mount.'
-					);
-				}
-				state.station_data[mount].unresolved_nowplaying_requests =
-					payload[mount];
-			}
-		},
-		'set/station/unresolved_nowplaying_requests/increment': (
-			state,
-			{ payload }
-		) => {
-			if (!state.station_data[payload]) {
-				throw new Error(
-					'Attempted to decrement unresolved_nowplaying_requests for an unregistered mount.'
-				);
-			}
-			const requests =
-				state.station_data[payload].unresolved_nowplaying_requests;
-			let newRequestsCount = 1;
-			if (requests) {
-				newRequestsCount = requests + 1;
-			}
-			state.station_data[payload].unresolved_nowplaying_requests =
-				newRequestsCount;
-		},
-		'set/station/unresolved_nowplaying_requests/decrement': (
-			state,
-			{ payload }
-		) => {
-			if (!state.station_data[payload]) {
-				throw new Error(
-					'Attempted to decrement unresolved_nowplaying_requests for an unregistered mount.'
-				);
-			}
-			const requests =
-				state.station_data[payload].unresolved_nowplaying_requests;
-			let newRequestsCount = requests - 1;
-			if (requests < 0) {
-				newRequestsCount = 0;
-			}
-			state.station_data[payload].unresolved_nowplaying_requests =
-				newRequestsCount;
-		},
-		'set/station/last_track_cuepoint_received': (state, { payload }) => {
-			for (let mount in payload) {
-				if (!state.station_data[mount]) {
-					throw new Error(
-						'Attempted to set last_track_cuepoint_received for an unregistered mount.',
-						mount
-					);
-				}
-				state.station_data[mount].last_track_cuepoint_received =
-					payload[mount];
-			}
+		'set/show_cue_label': (state, { payload }) => {
+			state.show_cue_label = !!payload;
 		},
 
 		/*
-		// Handle play calls
-		'action/play': (state, { payload }) => {
-			//log.debug('action/play', payload);
-			if (!payload || !state.station_data[payload]) {
-				log.error('Attempted to play an unregistered mount', payload);
-				throw new Error('Attempted to play an unregistered mount');
-			}
-			state.playing = payload;
-			for (let mount in state.station_data) {
-				state.station_data[mount].playing =
-					mount === payload ? true : false;
-			}
+		'set/dropdown_open': (state, { payload }) => {
+			state.dropdown_open = !!payload;
+		},
+		'set/dropdown_position': (state, { payload }) => {
+			state.dropdown_position = payload;
 		},
 		*/
+
 		'set/playing': (state, { payload }) => {
-			if (payload && !state.station_data[payload]) {
-				log.error('Attempted to play an unregistered mount', payload);
-				throw new Error('Attempted to play an unregistered mount');
-			}
 			state.playing = payload;
-			for (let mount in state.station_data) {
-				state.station_data[mount].playing =
-					mount === payload ? true : false;
+		},
+		'set/status': (state, { payload }) => {
+			state.status = payload;
+		},
+		'set/station': (state, { payload }) => {
+			const stations = { ...state.stations };
+			for (let mount in payload) {
+				if (!stations[mount]) {
+					stations[mount] = Object.assign(
+						{},
+						new Station(payload[mount])
+					);
+				} else {
+					stations[mount] = Object.assign(
+						stations[mount],
+						new Station(payload[mount])
+					);
+				}
+			}
+			state.stations = stations;
+		},
+		'set/station/primary': (state, { payload }) => {
+			if (payload in state.stations) {
+				state.primary_station = payload;
 			}
 		},
-
-		// Handle stop calls
-		'action/stop': (state, action) => {
-			log.debug('action/stop');
-			state.playing = false;
-			for (let mount in state.station_data) {
-				state.station_data[mount].playing = false;
+		'set/station/active': (state, { payload }) => {
+			if (payload in state.stations) {
+				state.active_station = payload;
 			}
 		},
+		'set/station/cuepoint': (state, { payload }) => {
+			for (let mount in payload) {
+				if (!state.stations?.[mount]) {
+					console.error(
+						'Attempted to set cue point for an unregistered mount',
+						{ mount, payload }
+					);
+					return;
+				}
 
-		// Handle dropdown
-		'action/dropdown-open': (state, action) => {
-			state.dropdown_open = true;
+				const cuePoint = Object.assign(
+					{},
+					new CuePoint(payload[mount])
+				);
+				state.cuepoints[mount] = cuePoint;
+				if (cuePoint.type?.includes('track')) {
+					state.stations[mount].last_cuepoint = Date.now();
+				}
+			}
 		},
-		'action/dropdown-close': (state, action) => {
-			state.dropdown_open = false;
+		'set/station/last_cuepoint': (state, { payload }) => {
+			for (let mount in payload) {
+				if (!state.stations?.[mount]) {
+					console.error(
+						'Attempted to set last cue point timestamp for an unregistered mount',
+						{ mount, payload }
+					);
+					return;
+				}
+
+				state.stations[mount].last_cuepoint = payload;
+			}
 		},
-		'action/dropdown-toggle': (state, action) => {
-			state.dropdown_open = !state.dropdown_open;
+		'set/station/cuepoint/artwork': (state, { payload }) => {
+			for (let mount in payload) {
+				if (!state.stations?.[mount]) {
+					console.error(
+						'Attempted to set cue point artwork for an unregistered mount',
+						{ mount, payload }
+					);
+					return;
+				}
+
+				if (state.cuepoints[mount]) {
+					state.cuepoints[mount].artwork = payload[mount];
+				}
+			}
+		},
+		'set/station/fetch_nowplaying': (state, { payload }) => {
+			for (let mount in payload) {
+				if (!state.stations?.[mount]) {
+					console.error(
+						'Attempted to set fetch_nowplaying for an unregistered mount',
+						{ mount, payload }
+					);
+					return;
+				}
+
+				state.stations[mount].fetch_nowplaying = payload;
+			}
+		},
+		'set/station/unresolved_nowplaying_requests': (state, { payload }) => {
+			for (let mount in payload) {
+				if (!state.stations?.[mount]) {
+					console.error(
+						'Attempted to set unresolved nowplaying request count for an unregistered mount',
+						{ mount, payload }
+					);
+					return;
+				}
+				state.stations[mount].unresolved_nowplaying_requests =
+					payload[mount];
+			}
+		},
+		'action/station/unresolved_nowplaying_requests/increment': (
+			state,
+			{ payload }
+		) => {
+			const mount = payload;
+			if (!state.stations?.[mount]) {
+				console.error(
+					'Attempted to increment unresolved nowplaying request count for an unregistered mount',
+					{ mount }
+				);
+				return;
+			}
+			let count = state.stations[mount].unresolved_nowplaying_requests;
+			state.stations[mount].unresolved_nowplaying_requests = count + 1;
+		},
+		'action/station/unresolved_nowplaying_requests/decrement': (
+			state,
+			{ payload }
+		) => {
+			const mount = payload;
+			if (!state.stations?.[mount]) {
+				console.error(
+					'Attempted to decrement unresolved nowplaying request count for an unregistered mount',
+					{ mount }
+				);
+				returnl;
+			}
+			let count = state.stations[mount].unresolved_nowplaying_requests;
+			count = count > 0 ? count - 1 : 0;
+			state.stations[mount].unresolved_nowplaying_requests = count;
+		},
+
+		'select/station/active': (state) => {
+			return (
+				state.playing || state.active_station || state.primary_station
+			);
 		},
 	},
 });
 
+const selectPlaying = (state) => state.playerState.playing;
+const selectActive = (state) => state.playerState.active_station;
+const selectPrimary = (state) => state.playerState.primary_station;
+const selectStatus = (state) => state.playerState?.status;
+//const selectDropdownOpen = (state) => state.playerState?.dropdown_open;
+const selectStation = (state, station) => {
+	if (station?.mount) {
+		return station;
+	} else {
+		return state.playerState?.stations?.[station];
+	}
+};
+const selectStations = (state) => state.playerState.stations;
+const selectCuePoints = (state) => state.playerState.cuepoints;
+const selectCuePoint = (state, station) => {
+	const stationObj = selectStation(state, station);
+	return state.playerState.cuepoints?.[stationObj?.mount];
+};
+
+export const selectCurrentStation = createSelector(
+	[selectPlaying, selectActive, selectPrimary],
+	(playing, active, primary) => playing || active || primary
+);
+
 export const playerStateSelect = (state) => state.playerState;
 
+export const playerStateSelects = new (class Selectors {
+	/*
+	ready = createSelector(
+		(state) => state.playerState.ready,
+		(ready) => ready
+	);
+	*/
+
+	playing = createSelector(selectPlaying, (playing) => playing);
+
+	interactive = createSelector(
+		(state) => state.playerState.interactive,
+		(interactive) => interactive
+	);
+
+	show_cue_label = createSelector(
+		[selectPlaying, selectActive, selectStations],
+		(playing, active, stations) => {
+			const current = playing || active;
+			return stations?.[current]?.fetch_nowplaying;
+		}
+	);
+
+	status = selectStatus;
+
+	/*
+	dropdown_open = selectDropdownOpen;
+	*/
+
+	'station/active' = selectActive;
+
+	'station/primary' = selectPrimary;
+
+	'station/current' = createSelector(
+		[selectPlaying, selectActive, selectPrimary],
+		(playing, active, primary) => {
+			const { playerState } = store.getState();
+			return playerState.stations?.[playing || active || primary];
+		}
+	);
+
+	'stations/count' = createSelector(
+		selectStations,
+		(stations) => Object.keys(stations).length
+	);
+
+	'station/status_labels' = createSelector(
+		[
+			selectStatus,
+			(state, station) => selectStation(state, station),
+			(state, station) => this['station/cuelabel'](state, station),
+		],
+		(status, station, cuelabel) => {
+			let newButtonLabel = 'Listen Live!';
+			let newCueLabel = station?.fetch_nowplaying ? cuelabel : '';
+			switch (status) {
+				case stream_status.LIVE_PREROLL:
+				case stream_status.LIVE_CONNECTING:
+				case stream_status.LIVE_RECONNECTING:
+					newButtonLabel = 'Connecting…';
+					newCueLabel = 'The stream will begin momentarily…';
+					break;
+				case stream_status.LIVE_BUFFERING:
+					newButtonLabel = 'Buffering…';
+					break;
+				case stream_status.LIVE_PLAYING:
+					newButtonLabel = station?.name || 'Now Playing';
+					break;
+				case stream_status.LIVE_FAILED:
+					newButtonLabel = 'Stream failed!';
+					newCueLabel = 'Please try again later';
+					break;
+				case stream_status.STATION_NOT_FOUND:
+					newButtonLabel = 'Station not found!';
+					newCueLabel =
+						'Player is misconfigured, please contact the station';
+					break;
+				case stream_status.PLAY_NOT_ALLOWED:
+					newButtonLabel = 'Not Allowed';
+					newCueLabel =
+						'Playback is not allowed at this time, please try again later';
+					break;
+				case stream_status.STREAM_GEOBLOCKED:
+				case stream_status.STREAM_GEO_BLOCKED_ALTERNATE:
+				case stream_status.STREAM_GEO_BLOCKED_NO_ALTERNATE:
+					newButtonLabel = 'Unavailable!';
+					newCueLabel =
+						'Sorry, this content is not available in your area.';
+					break;
+			}
+			return { buttonLabel: newButtonLabel, cueLabel: newCueLabel };
+		}
+	);
+
+	'station/cuepoint' = createSelector(
+		(state, station) => selectCuePoint(state, station),
+		(cuepoint) => {
+			return cuepoint;
+		}
+	);
+	'station/cuelabel' = createSelector(
+		(state, station) => this['station/cuepoint'](state, station),
+		(cuepoint) => {
+			return [cuepoint?.artist, cuepoint?.title]
+				.filter((k) => (k?.trim ? k.trim() : null))
+				.join(' – ');
+		}
+	);
+
+	stations = selectStations;
+	station = selectStation;
+	cuepoints = selectCuePoints;
+})();
+
 export const playerStateActions = playerStateSlice.actions;
+
+export const getPlayerState = () => {
+	const { playerState } = store.getState();
+	return playerState;
+};
 
 export default playerStateSlice.reducer;

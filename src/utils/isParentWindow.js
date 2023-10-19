@@ -1,8 +1,7 @@
 import config from '../config.json';
 
 /**
- * Determine if the current window matches the configured
- * siteframe_id.
+ * Determine if we are loaded in a cmls-page-transition frame.
  *
  * @returns {boolean}
  */

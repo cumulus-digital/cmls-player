@@ -1,25 +1,26 @@
 import store from 'Store';
 import { playerStateActions } from 'Store/playerStateSlice';
 
-import config from 'Config';
 import fixSassJson from 'Utils/fixSassJson';
-config = fixSassJson(config);
 
-import sdkConfig from './sdk-config.json';
+import baseConfig from 'Config';
+const config = fixSassJson(baseConfig);
+
+import baseSDKConfig from './config.json';
+const sdkConfig = fixSassJson(baseSDKConfig);
 
 import Logger from 'Utils/Logger';
 const log = new Logger('Triton SDK / Init');
 
 import { stream_status } from 'Consts';
 
-import { initTrackCuePointHandler } from './CuepointHandler';
+import { initTrackCuePointHandler } from './CuePointHandler';
 import { initOfflineNowPlaying } from './NowPlayingHandler';
+import { MediaPlayer } from './MediaPlayer';
 
-let player;
+import { appSignals } from '@/signals';
 
-window._CMLS = window._CMLS || {};
-
-export const initSDK = (sdkInstance) => {
+export function initSdk() {
 	if (!window.TDSdk) {
 		throw new Error(
 			'initSDK called without window.TDSdk available! Triton SDK must be included.'
@@ -34,49 +35,64 @@ export const initSDK = (sdkInstance) => {
 		adBlockerDetected: adBlockerDetected.bind(this),
 	};
 
-	player = sdkInstance.setPlayer(new window.TDSdk(tdPlayerConfig));
-	window._CMLS.webplayer_instance = player;
-	log.debug('SDK Initialized', tdPlayerConfig, player);
-};
+	// Generate random mediaplayer ID
+	this.mediaPlayerId = Math.floor(100000000 + Math.random() * 900000000);
+	tdPlayerConfig.coreModules.find(
+		(mod) => mod.id == 'MediaPlayer'
+	).playerId = `${config.mediaplayer_id_prefix}-${this.mediaPlayerId}`;
 
-const onPlayerReady = (e) => {
-	if (!player) {
+	const player = this.setPlayer(new window.TDSdk(tdPlayerConfig));
+	log.debug('SDK Initialized, awaiting ready state', tdPlayerConfig, player);
+
+	this.mediaPlayer = new MediaPlayer();
+}
+
+function onPlayerReady(e) {
+	if (!this.player) {
 		log.error('onPlayerReady called, but player is not available.');
 		throw new Error('onPlayerReady called, but player is not available.');
 	}
 
 	log.debug(
 		'Attaching listener',
-		{ event: 'stream-status', callback_name: onStreamStatusChange.name },
-		onStreamStatusChange
+		{
+			event: 'stream-status',
+			callback_name: onStreamStatusChange.bind(this).name,
+		},
+		onStreamStatusChange.bind(this)
 	);
-	player.addEventListener('stream-status', onStreamStatusChange);
+	this.player.addEventListener(
+		'stream-status',
+		onStreamStatusChange.bind(this)
+	);
 
-	store.dispatch(playerStateActions['set/ready'](true));
+	this.setReady(true);
 	log.debug('SDK is ready.');
 
-	initTrackCuePointHandler(player);
-	initOfflineNowPlaying(player);
+	initTrackCuePointHandler.call(this);
+	initOfflineNowPlaying.call(this);
+	if (this.mediaPlayer) {
+		this.mediaPlayer.init();
+	}
 
-	const { playerState } = store.getState();
+	log.debug('Modules configured.', this);
+}
 
-	log.debug('Modules configured.', playerState);
-};
-
-const onConfigError = (e) => {
+function onConfigError(e) {
 	throw e;
-};
+}
 
-const onModuleError = (e) => {
+function onModuleError(e) {
 	throw e;
-};
+}
 
-const adBlockerDetected = (e) => {
+function adBlockerDetected(e) {
 	log.warn('Ad blocker detected', e);
-	store.dispatch(playerStateActions['set/ad_blocker_detected'](true));
-};
+	//store.dispatch(playerStateActions['set/ad_blocker_detected'](true));
+	appSignals.sdk.ad_blocker_detected.value = true;
+}
 
-const onStreamStatusChange = (e) => {
+function onStreamStatusChange(e) {
 	if (typeof e?.data?.code === 'undefined') {
 		return;
 	}
@@ -84,18 +100,17 @@ const onStreamStatusChange = (e) => {
 		return;
 	}
 
-	const { playerState } = store.getState();
-
-	log.debug('Status:', stream_status[e.data.code], e);
+	log.debug('Status change:', stream_status[e.data.code], e);
 	store.dispatch(
 		playerStateActions['set/status'](stream_status[e.data.code])
 	);
 
 	// Handle when stream automatically pauses
+	const { playerState } = store.getState();
 	if (
 		playerState.playing &&
 		stream_status[e.data.code] === stream_status.LIVE_PAUSE
 	) {
-		store.dispatch(playerStateActions['action/stop']());
+		this.stop();
 	}
-};
+}

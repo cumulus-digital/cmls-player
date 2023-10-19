@@ -1,64 +1,82 @@
 import store from 'Store';
 import { playerStateActions } from 'Store/playerStateSlice';
 
-import config from 'Config';
 import fixSassJson from 'Utils/fixSassJson';
-config = fixSassJson(config);
+
+import baseConfig from 'Config';
+const config = fixSassJson(baseConfig);
 
 import Logger from 'Utils/Logger';
 const log = new Logger('Triton SDK / NowPlayingHandler');
 
-import { generateCuepointTrackId } from './CuepointHandler';
-import { setCuePoint } from './CuepointHandler';
+import { setCuePoint } from './CuePointHandler';
+import generateIdFromString from 'Utils/generateIdFromString';
+import { SDK } from '..';
 
-let player;
 let nowPlayingInterval;
 
 /**
  * Initialize timer interval to fetch now playing data
  */
-export const initOfflineNowPlaying = (newPlayer = null) => {
-	if (!newPlayer) {
+export function initOfflineNowPlaying() {
+	if (!this.player) {
 		throw new Error('You must supply a player object parameter.');
 	}
-	if (!newPlayer.NowPlayingApi) {
+	if (!this.player.NowPlayingApi) {
 		throw new Error('Player must have NowPlayingApi module.');
 	}
 
-	player = newPlayer;
-
 	log.debug(
 		'Attaching listener',
-		{ event: 'list-loaded', callback_name: listLoaded.name },
+		{ event: 'list-loaded', callback: 'listLoaded' },
 		listLoaded
 	);
-	player.addEventListener('list-loaded', listLoaded);
+	this.player.addEventListener('list-loaded', listLoaded.bind(this));
 
-	const interval = config.offline_nowplaying_interval || 120000;
-	nowPlayingInterval = setInterval(() => nowPlayingTick(), interval);
+	const interval = config.offline_nowplaying_interval || 60000;
+	nowPlayingInterval = setInterval(nowPlayingTick.bind(this), interval);
+
+	document.addEventListener('visibilitychange', () => {
+		if (document.hidden) {
+			log.debug('Tab hidden, pausing now playing interval');
+			store.dispatch(playerStateActions['set/fetch_nowplaying'](false));
+		} else {
+			log.debug('Tab focus returned, resuming now playing interval');
+			store.dispatch(playerStateActions['set/fetch_nowplaying'](true));
+		}
+	});
 
 	log.debug('Offline Now Playing interval has begun.', { interval });
-	nowPlayingTick();
-};
+	nowPlayingTick.call(this);
+}
+
+export function forceNowPlayingTick() {
+	nowPlayingTick.call(SDK, true);
+}
 
 /**
  * Called at nowPlayingInterval to fetch fresh Now Playing data for
  * all registered stations.
  * @returns  {void}
  */
-const nowPlayingTick = () => {
+function nowPlayingTick(forced) {
 	const { playerState } = store.getState();
 
-	if (!Object.keys(playerState.station_data).length) {
+	if (!playerState.fetch_nowplaying && forced !== true) {
+		log.debug('Now playing fetch globally disabled during this tick.');
+		return;
+	}
+
+	if (!Object.keys(playerState.stations).length) {
 		log.warn('nowPlayingTick: No stations registered.', {
 			state: playerState,
 		});
 		return;
 	}
 
-	for (let mount in playerState.station_data) {
-		const station = playerState.station_data[mount];
-		const last_cuepoint_time = station.last_track_cuepoint_received;
+	for (let mount in playerState.stations) {
+		const station = playerState.stations[mount];
+		const last_cuepoint = station.last_cuepoint;
 		const unresolved_requests = station.unresolved_nowplaying_requests;
 		const max_unresolved_requests =
 			config.max_unresolved_nowplaying_requests || 10;
@@ -76,7 +94,7 @@ const nowPlayingTick = () => {
 		// Do not fetch if station has too many unresolved requests
 		if (unresolved_requests > max_unresolved_requests) {
 			// If last cuepoint was more than 30 minutes ago, re-enable fetch for next interval
-			if (Date.now() - last_cuepoint_time > 1800000) {
+			if (Date.now() - last_cuepoint > 1800000) {
 				enableFetch(mount);
 				resetUnresolvedRequests(mount);
 				continue;
@@ -91,15 +109,14 @@ const nowPlayingTick = () => {
 				continue;
 			}
 		}
-
 		log.debug('Requesting last played', { mount, station });
-		player.NowPlayingApi.load({
+		this.player.NowPlayingApi.load({
 			mount,
 			numberToFetch: 1,
 		});
 		incrementUnresolvedRequests(mount);
 	}
-};
+}
 
 /**
  * Handle a list-loaded event
@@ -115,7 +132,7 @@ const listLoaded = (e) => {
 
 	const { playerState } = store.getState();
 
-	const station = playerState.station_data?.[mount];
+	const station = playerState.stations[mount];
 	if (!station) {
 		log.warn(
 			'Received offline Now Playing data for an unregistered station',
@@ -132,32 +149,33 @@ const listLoaded = (e) => {
 		return;
 	}
 
-	const cuepoint = e?.data?.list?.length ? e?.data?.list[0] : false;
-	if (!cuepoint) {
+	const cueData = e.data?.list?.length ? e?.data?.list[0] : false;
+	if (!cueData) {
 		log.debug('Offline Now Playing list was empty', { event: e, station });
 		return;
 	}
 
-	if (!cuepoint.trackID) {
-		cuepoint.trackId = generateCuepointTrackId(
-			cuepoint?.artistName,
-			cuepoint?.cueTitle
+	if (!cueData.trackID) {
+		cueData.trackID = generateIdFromString(
+			[cueData?.artistName, cueData?.cueTitle].filter((k) =>
+				k.trim ? k.trim() : ''
+			)
 		);
 	}
 
 	// Don't handle if track id hasn't changed
-	if (cuepoint.trackID === station?.cuepoint?.track_id) {
+	if (cueData.trackID === playerState.cuepoints?.[mount]?.track_id) {
 		return;
 	}
 
-	cuepoint.type = 'offline-track';
+	cueData.type = 'offline-track';
 
 	log.debug('Received new offline Now Playing data', {
 		event: e,
-		cuepoint,
+		cueData,
 		station,
 	});
-	setCuePoint(mount, cuepoint);
+	setCuePoint(mount, cueData);
 };
 
 /**
@@ -165,13 +183,9 @@ const listLoaded = (e) => {
  * @param {string} mount
  * @param {boolean} flag
  */
-const setFetchFlag = (mount, flag = true) => {
-	store.dispatch(
-		playerStateActions['set/station/fetch_nowplaying']({
-			[mount]: flag,
-		})
-	);
-};
+function setFetchFlag(mount, flag = true) {
+	store.dispatch(playerStateActions['set/station/fetch_nowplaying'](flag));
+}
 
 /**
  * Enable fetch_nowplaying for a station
@@ -196,8 +210,8 @@ const disableFetch = (mount) => {
 const incrementUnresolvedRequests = (mount) => {
 	store.dispatch(
 		playerStateActions[
-			'set/station/unresolved_nowplaying_requests/increment'
-		](mount)
+			'action/station/unresolved_nowplaying_requests/increment'
+		]([mount])
 	);
 };
 
@@ -208,15 +222,11 @@ const incrementUnresolvedRequests = (mount) => {
 const decrementUnresolvedRequests = (mount) => {
 	store.dispatch(
 		playerStateActions[
-			'set/station/unresolved_nowplaying_requests/decrement'
-		](mount)
+			'action/station/unresolved_nowplaying_requests/decrement'
+		]([mount])
 	);
 };
 
-/**
- * Reset unresolved requests tracker for a station to 0
- * @param {string} mount
- */
 const resetUnresolvedRequests = (mount) => {
 	store.dispatch(
 		playerStateActions['set/station/unresolved_nowplaying_requests']({

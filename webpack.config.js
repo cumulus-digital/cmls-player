@@ -1,148 +1,112 @@
-const webpack = require('webpack');
-const { basename, dirname, resolve } = require('path');
-const browserslist = require('browserslist');
-const { CleanWebpackPlugin } = require('clean-webpack-plugin');
-const TerserPlugin = require('terser-webpack-plugin');
-const MiniCSSExtractPlugin = require('mini-css-extract-plugin');
-const postCSSPlugins = require('@wordpress/postcss-plugins-preset');
-const jsonInSassImporter = require('node-sass-json-importer');
 const path = require('path');
 const fs = require('fs');
-const glob = require('glob');
+
+const browserslist = require('browserslist');
+const TerserPlugin = require('terser-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 
 module.exports = (env) => {
 	const isProduction = env.NODE_ENV === 'production';
 	const mode = isProduction ? 'production' : 'development';
-	const fromConfigRoot = (fileName) =>
-		path.join(path.dirname(__dirname), 'config', fileName);
-
-	let target = 'browserslist';
-	if (!browserslist.findConfig('.')) {
-		target += ':' + fromConfigRoot('.browserslistrc');
-	}
-
-	// App directory
-	const appDirectory = fs.realpathSync(process.cwd());
-
-	// Gets absolute path of file within app directory
-	const resolveAppPath = (relativePath) =>
-		path.resolve(appDirectory, relativePath);
-
-	const host = process.env.HOST || 'localhost';
+	const host = env.HOST || 'localhost';
+	const port = 34687;
 
 	const cssLoaders = [
 		{
-			loader: require.resolve('css-loader'),
+			loader: 'css-loader',
 			options: {
 				sourceMap: !isProduction,
-				modules: {
-					auto: true,
-				},
 			},
 		},
 		{
-			loader: require.resolve('postcss-loader'),
+			loader: 'postcss-loader',
 			options: {
+				sourceMap: !isProduction,
 				postcssOptions: {
-					ident: 'postcss',
-					sourceMap: !isProduction,
-					plugins: isProduction
-						? [
-								...postCSSPlugins,
-								require('cssnano')({
-									preset: [
-										'default',
-										{
-											discardComments: {
-												removeAll: true,
-											},
-										},
-									],
-								}),
-						  ]
-						: postCSSPlugins,
+					plugins: [
+						'postcss-preset-env',
+						{
+							autoprefixer: { grid: true },
+						},
+						//isProduction && require('cssnano'),
+					],
 				},
 			},
 		},
 		{
-			loader: require.resolve('sass-loader'),
+			loader: 'sass-loader',
 			options: {
 				sourceMap: !isProduction,
-				sassOptions: {
-					webpackImporter: true,
-					importer: jsonInSassImporter(),
-				},
 			},
 		},
 	];
 
+	let target = 'browserslist';
+	if (!browserslist.findConfig('.')) {
+		target += ':' + './browserslistrc';
+	}
+
 	return {
 		mode,
-		target: target,
+		target,
 		entry: {
 			bundle: './src/index.js',
-			//outer: './src/outer.scss',
-			//inner: './src/inner.scss',
 		},
 		output: {
 			filename: '[name].js',
-			path: resolve(process.cwd(), 'dist'),
+			path: path.resolve(__dirname, 'dist'),
 		},
 		resolve: {
 			alias: {
 				react: 'preact/compat',
 				'react-dom': 'preact/compat',
 				'react/jsx-runtime': 'preact/jsx-runtime',
-				'lodash-es': 'lodash',
+
 				'@': path.resolve(__dirname, 'src'),
 				Config: path.resolve(__dirname, 'src/config.json'),
 				Consts: path.resolve(__dirname, 'src/consts.js'),
 				Utils: path.resolve(__dirname, 'src/utils'),
 				Store: path.resolve(__dirname, 'src/store'),
+				Generics: path.resolve(__dirname, 'src/generics'),
 			},
-			extensions: ['.jsx', '.ts', '.tsx', '...'],
+			extensions: ['.mjs', '.js', '.jsx', '.ts', '.tsx', '.json', '...'],
 		},
 		optimization: {
-			// Only concatenate modules in production, when not analyzing bundles.
-			concatenateModules: isProduction,
 			minimize: isProduction,
 			minimizer: [
 				new TerserPlugin({
-					parallel: true,
-					terserOptions: {
-						compress: {
-							passes: 5,
-						},
-					},
 					extractComments: false,
+					terserOptions: {
+						sourceMap: !isProduction,
+					},
 				}),
 			],
+		},
+		stats: {
+			optimizationBailout: true,
 		},
 		module: {
 			rules: [
 				{
 					test: /\.(j|t)sx?$/,
-					exclude: /(node_modules|bower_components)/,
+					exclude: /node_modules/,
 					use: {
 						loader: 'babel-loader',
 						options: {
-							babelrc: true,
-							configFile: true,
+							sourceMap: !isProduction,
 							presets: [
 								'@babel/preset-react',
-								'@babel/preset-env',
-								/*
 								[
 									'@babel/preset-env',
 									{
-										loose: true,
 										debug: true,
+										modules: false,
 										useBuiltIns: 'usage',
 										corejs: require('core-js/package.json')
 											.version,
 									},
 								],
-								*/
 							],
 							plugins: [
 								['@babel/plugin-transform-runtime'],
@@ -158,13 +122,10 @@ module.exports = (env) => {
 					},
 				},
 				{
-					test: /\.css$/,
-					use: cssLoaders,
-				},
-				{
 					oneOf: [
+						// Handle dynamic style injection
 						{
-							test: /\.(sc|sa)ss$/,
+							test: /.(c|sc|sa)ss$/,
 							resourceQuery: /inline/,
 							use: [
 								{
@@ -183,34 +144,18 @@ module.exports = (env) => {
 								...cssLoaders,
 							],
 						},
+						// Any other style compilation
 						{
-							test: /\.(sc|sa)ss$/,
+							test: /\.(c|sc|sa)ss$/,
 							use: [
 								{
-									loader: MiniCSSExtractPlugin.loader,
+									loader: MiniCssExtractPlugin.loader,
 								},
 								...cssLoaders,
 							],
 						},
 					],
 				},
-				/*
-				{
-					test: /\.(sc|sa)ss$/,
-					use: [
-						...cssLoaders,
-						{
-							loader: require.resolve('sass-loader'),
-							options: {
-								sourceMap: !isProduction,
-								sassOptions: {
-									importer: jsonInSassImporter(),
-								},
-							},
-						},
-					],
-				},
-				*/
 				{
 					oneOf: [
 						{
@@ -232,36 +177,19 @@ module.exports = (env) => {
 			],
 		},
 		plugins: [
-			new CleanWebpackPlugin({
-				cleanAfterEveryBuildPatterns: ['!fonts/**', '!images/**'],
-				// Prevent it from deleting webpack assets during builds that have
-				// multiple configurations returned in the webpack config.
-				cleanStaleWebpackAssets: false,
-			}),
-			new MiniCSSExtractPlugin({
+			new CleanWebpackPlugin(),
+			new MiniCssExtractPlugin({
 				filename: '[name].css',
-				chunkFilename: (pathData) => {
-					return '[name].css';
-				},
+				chunkFilename: (pathData) => '[name].css',
 			}),
 		],
+
 		devtool: isProduction ? false : 'source-map',
 		devServer: {
-			// Serve index.html as the base
-			static: resolveAppPath('./'),
-
-			// Enable compression
-			compress: true,
-
-			// Enable hot reloading
-			hot: false,
-
+			static: './',
 			host,
-
-			port: 34687,
-
+			port,
 			allowedHosts: 'all',
-
 			headers: {
 				'Access-Control-Allow-Origin': '*',
 				'Access-Control-Allow-Methods':

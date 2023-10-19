@@ -1,6 +1,5 @@
 {
-	"sdk_url": "'//sdk.listenlive.co/web/2.9/td-sdk.min.js'",
-	"mediaplayer_id_prefix": "cmlsmediaplayer",
+	"url": "'//sdk.listenlive.co/web/2.9/td-sdk.min.js'",
 	"td_player_config": {
 		"coreModules": [
 			{

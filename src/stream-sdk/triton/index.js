@@ -1,49 +1,52 @@
-import { h, Component, Fragment } from 'preact';
-import throttle from 'lodash/throttle';
+import { h } from 'Utils/createElement';
 
 import store from 'Store';
-import { playerStateActions, playerStateSelect } from 'Store/playerStateSlice';
+import { playerStateActions } from 'Store/playerStateSlice';
 
-import isParentWindow from 'Utils/isParentWindow';
-import domReady from 'Utils/domReady';
-
-import config from 'Config';
+import baseConfig from 'Config';
 import fixSassJson from 'Utils/fixSassJson';
-config = fixSassJson(config);
+const config = fixSassJson(baseConfig);
 
-import sdkConfig from './sdk-config.json';
-sdkConfig = fixSassJson(sdkConfig);
+import baseSDKConfig from './config.json';
+const sdkConfig = fixSassJson(baseSDKConfig);
 
 import { stream_status } from 'Consts';
 
 import Logger from 'Utils/Logger';
 const log = new Logger('Triton SDK');
 
-import { initSDK, player } from './InitSDK';
-import { MediaPlayer } from './MediaPlayer';
+import { initSdk } from './initSdk';
+import isParentWindow from 'Utils/isParentWindow';
+import { forceNowPlayingTick } from './NowPlayingHandler';
+import { batch } from 'react-redux';
+
+import { appSignals } from '@/signals';
+import { CuePoint } from 'Store/CuePoint';
 
 export class TritonSDK {
 	static player;
 	static mediaPlayer;
+	static mediaPlayerId;
 	static scriptTag;
-	static ready = false;
-	static interactive = false;
+	static previousStation = false;
+	static playingHere = false;
 
-	static previouslyPlayed = false;
+	static init(scriptUrl = null) {
+		const self = this;
+		if (!scriptUrl) {
+			scriptUrl = sdkConfig.url;
+		}
+		this.scriptTag = (
+			<script
+				id={config.sdk_id}
+				async={true}
+				src={scriptUrl}
+				onLoad={this.onScriptLoad.bind(self)}
+			/>
+		);
+		document.head.appendChild(this.scriptTag);
 
-	static init(scriptUrl) {
-		//if (isParentWindow()) {
-		this.scriptTag = document.createElement('script');
-		this.scriptTag.setAttribute('async', true);
-		this.scriptTag.setAttribute('src', scriptUrl);
-		this.scriptTag.onload = (e) => {
-			initSDK(this);
-			this.mediaPlayer = new MediaPlayer(this.player, this.playStation);
-			store.dispatch(playerStateActions['set/interactive'](true));
-		};
-		window.self.document.head.appendChild(this.scriptTag);
-
-		// Handle stop requests across tabs
+		// Handle state changes and cross-window stops
 		store.subscribe(() => {
 			const { playerState } = store.getState();
 
@@ -51,70 +54,138 @@ export class TritonSDK {
 				return;
 			}
 
-			if (this.previouslyPlayed !== playerState.playing) {
-				this.previouslyPlayed = playerState.playing;
+			if (this.previousStation !== playerState.playing) {
+				this.previousStation = playerState.playing;
 
-				if (!playerState.playing) {
-					this.stop();
+				if (!playerState.playing && this.isPlayingHere()) {
+					this.onStopMessage();
 				}
 			}
 
-			if (this.interactive !== playerState.interactive) {
-				this.interactive = playerState.interactive;
+			if (
+				this.isPlayingHere() &&
+				playerState.status === stream_status.LIVE_PAUSE
+			) {
+				this.stop();
 			}
 		});
-		//}
+
+		if (isParentWindow()) {
+			// Stop playing if the playing window is closed
+			window.addEventListener('beforeunload', (e) => {
+				if (this.isPlayingHere()) {
+					this.stop();
+				}
+			});
+
+			// Handle requests from children
+			window.addEventListener('message', (e) => {
+				const data = e?.data;
+				if (!data?.action) return;
+
+				if (data.action === 'cmls-player:play') {
+					this.onPlayMessage(data.mount);
+				}
+				if (data.action === 'cmls-player:stop') {
+					this.onStopMessage();
+				}
+			});
+		}
+	}
+
+	static isReady() {
+		//const { playerState } = store.getState();
+		//return playerState.ready;
+		return appSignals.sdk.ready.peek();
+	}
+	static setReady(ready = true) {
+		//store.dispatch(playerStateActions['set/ready'](ready));
+		appSignals.sdk.ready.value = ready;
+	}
+
+	static isPlayingHere() {
+		return !!this.playingHere;
+	}
+
+	static onScriptLoad(e) {
+		initSdk.call(this);
+		//playerState.interactive = true;
 	}
 
 	static setPlayer(player) {
 		this.player = player;
+
+		window._CMLS = window._CMLS || {};
+		window._CMLS.webplayer_instance = player;
+
 		return this.player;
 	}
+
 	static getPlayer() {
 		return this.player;
 	}
 
-	static isReady() {
-		return this.ready;
-	}
-
-	static isInteractive() {
-		const { playerState } = store.getState();
-		return this.ready && playerState.interactive;
-	}
-
-	static isPlaying() {
-		const { playerState } = store.getState();
-		return !!playerState.playing;
-	}
-
-	static play(mount) {
+	static onPlayMessage(mount) {
 		const { playerState } = store.getState();
 
 		if (!mount) {
-			mount = playerState.station_primary;
+			mount = playerState.primary_station;
 		}
 
-		/*
-		if (!isPlaying()) {
+		if (playerState.playing) {
+			this.stop();
+			batch(() => {
+				store.dispatch(
+					playerStateActions['set/status'](
+						stream_status.LIVE_CONNECTING
+					)
+				);
+				store.dispatch(playerStateActions['set/interactive'](false));
+			});
+			setTimeout(() => {
+				this.onPlayMessage.call(this, mount);
+			}, 250);
 			return;
 		}
-		*/
 
-		if (this.isPlaying()) {
-			this.stop();
-		}
+		log.debug('Play station!', { playerState });
+		batch(() => {
+			store.dispatch(playerStateActions['set/playing'](mount));
+			store.dispatch(playerStateActions['set/station/active'](mount));
+			store.dispatch(playerStateActions['set/interactive'](false));
+		});
+		this.playingHere = true;
 
-		log.debug('Play station!', { state: playerState });
-		store.dispatch(playerStateActions['set/playing'](mount));
-		store.dispatch(playerStateActions['set/interactive'](false));
-
-		this.mediaPlayer.playVastAd(
-			playerState.station_data[mount].vast,
-			() => {
+		if (this.mediaPlayer) {
+			try {
+				this.mediaPlayer.playVastAd(
+					playerState.stations[mount].vast,
+					(e) => {
+						this.beginStream(mount);
+					}
+				);
+			} catch (e) {
+				log.error('Error playing vast ad!', e);
 				this.beginStream(mount);
 			}
-		);
+		} else {
+			this.beginStream(mount);
+		}
+	}
+
+	static play(mount) {
+		if (isParentWindow()) {
+			this.onPlayMessage(mount);
+		} else {
+			log.debug('Sending play message to parent');
+			window[config.siteframe_id]?.postMessage(
+				{
+					action: 'cmls-player:play',
+					mount,
+				},
+				'*'
+			);
+		}
 	}
 
 	static beginStream(mount) {
@@ -126,136 +197,59 @@ export class TritonSDK {
 		store.dispatch(playerStateActions['set/interactive'](true));
 	}
 
-	static stop() {
+	static onStopMessage() {
 		const { playerState } = store.getState();
+		const wasPlaying = playerState.playing;
+		const wasStatus = playerState.status;
+		log.debug('Stopping', wasPlaying);
+		batch(() => {
+			if (wasPlaying) {
+				log.debug('Clearing cuepoint', wasPlaying);
+				store.dispatch(
+					playerStateActions['set/station/cuepoint']({
+						[wasPlaying]: {},
+					})
+				);
+			}
+			store.dispatch(playerStateActions['set/playing'](false));
+			if (wasStatus !== stream_status.LIVE_PLAYING) {
+				store.dispatch(
+					playerStateActions['set/status'](stream_status.LIVE_STOP)
+				);
+			}
+		});
+		if (this.isPlayingHere()) {
+			this.player.stop();
+			this.playingHere = false;
+			forceNowPlayingTick.call(this);
+		}
+	}
 
-		this.player.stop();
+	static stop() {
+		if (isParentWindow()) {
+			this.onStopMessage();
+		} else {
+			log.debug('Sending stop message to parent');
+			window[config.siteframe_id]?.postMessage(
+				{
+					action: 'cmls-player:stop',
+				},
+				'*'
+			);
+		}
+	}
 
-		store.dispatch(playerStateActions['set/playing'](false));
-		store.dispatch(playerStateActions['set/interactive'](true));
+	static playVastAd(requestConfig) {
+		const adConfig = {
+			trackingParameters: {},
+			...requestConfig,
+		};
+		if (!adConfig.trackingParameters?.player) {
+			adConfig.trackingParameters.player = 'cmls-webplayer';
+		}
+		store.dispatch(
+			playerStateActions['set/status'](stream_status.LIVE_PREROLL)
+		);
+		this.player.playAd('vastAd', adConfig);
 	}
 }
-TritonSDK.init(sdkConfig.sdk_url);
-
-/*
-if (isParentWindow()) {
-	// Inject script tag and media player
-	const scriptTag = document.createElement('script');
-	scriptTag.setAttribute('async', true);
-	scriptTag.setAttribute('src', sdkConfig.sdk_url);
-	scriptTag.onload = (e) => {
-		initSDK(e);
-		mediaPlayerInstance = new MediaPlayer(player, playStation);
-	};
-	window.self.document.head.appendChild(scriptTag);
-
-	const isReady = () => {
-		const { playerState } = store.getState();
-		return !!playerState.ready;
-	};
-
-	const isInteractive = () => {
-		const { playerState } = store.getState();
-		return isReady() && !!playerState.interactive;
-	};
-
-	const isPlaying = () => {
-		const { playerState } = store.getState();
-		return !!playerState.playing;
-	};
-
-	const playStation = () => {
-		const { playerState } = store.getState();
-
-		if (!isPlaying()) {
-			return;
-		}
-
-		log.debug('Play station!', { state: playerState });
-
-		player.play({
-			mount: playerState.playing,
-			trackingParameters: { player: 'cmls-webplayer' },
-		});
-
-		store.dispatch(playerStateActions['set/interactive'](true));
-	};
-
-	const stopStation = () => {
-		const { playerState } = store.getState();
-
-		player.stop();
-
-		store.dispatch(playerStateActions['set/interactive'](true));
-	};
-
-	const beginPreroll = () => {
-		const { playerState } = store.getState();
-		mediaPlayerInstance.playVastAd();
-	};
-
-	const togglePlay = throttle(
-		() => {
-			const { playerState } = store.getState();
-
-			if (!isInteractive()) {
-				return;
-			}
-
-			if (!isPlaying()) {
-				log.debug('togglePlay stop');
-				stopStation();
-				return;
-			}
-
-			log.debug('togglePlay play');
-			store.dispatch(playerStateActions['set/interactive'](false));
-
-			if (playerState.status !== stream_status.LIVE_STOP) {
-				player.stop();
-				setTimeout(() => beginPreroll(), 200);
-			} else {
-				beginPreroll();
-			}
-		},
-		200,
-		{ leading: true, trailing: false }
-	);
-
-	let lastPlaying;
-	store.subscribe(() => {
-		const { playerState } = store.getState();
-
-		if (!player) {
-			return;
-		}
-
-		if (lastPlaying === playerState.playing) {
-			return;
-		}
-
-		if (lastPlaying && playerState.playing) {
-			log.debug('Switching stations', {
-				previous: lastPlaying,
-				next: playerState.playing,
-			});
-
-			player.stop();
-			setTimeout(() => beginPreroll(playStation), 200);
-			lastPlaying = playerState.playing;
-			return;
-		}
-
-		if (!lastPlaying && playerState.playing) {
-			lastPlaying = playerState.playing;
-			beginPreroll(playStation);
-			return;
-		}
-
-		if (!playerState.playing) {
-			lastPlaying = playerState.playing;
-			player.stop();
-		}
-	});
-}
-*/

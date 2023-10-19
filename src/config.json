@@ -1,6 +1,7 @@
 {
+	"STORE_VERSION": 1.1,
 	"siteframe_id": "cmls_siteframe",
-	"sdk_div_id": "'cmls-player-sdk-connector'",
+	"sdk_id": "'cmls-player-sdk-connector'",
 	"mediaplayer_id_prefix": "cmlsmediaplayer",
 	"minutes_between_preroll": 0,
 	"fetch_artwork": false,

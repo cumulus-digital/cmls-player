@@ -5,7 +5,7 @@
  * @param {object} json
  * @return {object}
  */
-const fixSassJson = (json) => {
+export default (json) => {
 	for (let k in json) {
 		if (typeof json[k] === 'string' || json[k] instanceof String) {
 			json[k] = json[k].replace(/^'(.*)'$/, '$1');
@@ -13,5 +13,3 @@ const fixSassJson = (json) => {
 	}
 	return json;
 };
-
-export default fixSassJson;

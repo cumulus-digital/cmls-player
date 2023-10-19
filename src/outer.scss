@@ -1,11 +1,18 @@
-@import "./config.json";
+@import url("https://fonts.googleapis.com/css2?family=Open+Sans:wdth,wght@87.5,400;87.5,600;87.5,700;100,400&display=swap");
 
 cmls-player {
-	display: inline-block;
-
+	&,
+	& * {
+		all: unset !important;
+	}
+	display: inline-block !important;
 	> * {
-		display: none;
+		display: none !important;
 	}
 }
-#cmls-player-sdk-connector {
+.cmls-player-mediaplayer {
+	&,
+	& * {
+		all: unset;
+	}
 }

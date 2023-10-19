@@ -21,16 +21,7 @@ export const fetchItunesArtwork = (artist, track) => {
 
 		// Create an array of artist and track strings, trimmed and filtered for null
 		const term = [artist, track]
-			.map((k) => {
-				if (typeof k === 'string' || k instanceof String) {
-					k.trim();
-				} else if (typeof k !== 'undefined') {
-					String(k).trim();
-				} else {
-					k = null;
-				}
-				return k;
-			})
+			.map((k) => (k.trim ? k.trim() : null))
 			.filter((k) => k);
 
 		// We must have both artist and track
@@ -48,7 +39,9 @@ export const fetchItunesArtwork = (artist, track) => {
 					return reject();
 				}
 
-				resolve(data.results[0].artworkUrl100);
+				resolve(
+					data.results[0].artworkUrl100.replace('100x100', '300x300')
+				);
 			})
 			.catch((e) => {
 				log.debug('Exception when searching iTunes!', e);
@@ -98,11 +91,12 @@ export const searchItunes = (term) => {
 		country: playerState.country || 'us',
 		media: 'music',
 		entity: 'song',
-		attribute: 'songTerm',
+		//attribute: 'songTerm',
 		limit: 1,
 		lang: playerState.lang || 'en_us',
 		explicit: playerState.allow_explicit_covers || 'No',
 		version: 2,
+		//_: Date.now(),
 	}).toString();
 
 	const controller = new AbortController();

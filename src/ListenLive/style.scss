@@ -1,0 +1,595 @@
+:host {
+	&,
+	& * {
+		&,
+		&::after,
+		&::before {
+			box-sizing: border-box;
+		}
+	}
+
+	font-family: "Open sans", arial, sans-serif;
+	font-size: 12px;
+	text-align: left;
+	text-decoration-thickness: 1px;
+	text-decoration-thickness: from-font;
+	text-underline-offset: 0.2em;
+
+	--highlightColor: #000;
+	--backgroundColor: #e00;
+	--textColor: #fff;
+}
+
+h1,
+h2,
+h3 {
+	margin: 0;
+	padding: 0;
+}
+h2 {
+	font-size: 1.3em;
+}
+h3 {
+	font-size: 1.15em;
+}
+
+img {
+	height: auto;
+	max-width: 100%;
+	max-height: 100%;
+	object-fit: fill;
+}
+svg {
+	width: 100%;
+	height: 100%;
+	object-fit: fill;
+}
+
+button {
+	display: block;
+	background: transparent;
+	color: inherit;
+	border: 0;
+	text-align: left;
+}
+
+.listen-live-container {
+	display: none;
+
+	background-color: var(--backgroundColor);
+	background-image: linear-gradient(
+		-20deg,
+		rgba(0, 0, 0, 0.1) 20%,
+		transparent 40%,
+		rgba(0, 0, 0, 0.2) 100%
+	);
+	background-image: linear-gradient(
+		-20deg,
+		color-mix(in srgb, var(--highlightColor) 10%, transparent) 20%,
+		transparent 40%,
+		color-mix(in srgb, var(--highlightColor) 20%, transparent) 100%
+	);
+	color: var(--textColor);
+
+	border: 1px solid outset rgba(255, 255, 255, 0.1);
+	border: 1px solid outset
+		color-mix(in srgb, var(--textColor) 10%, transparent) 20%;
+	border-radius: 3px;
+	overflow: hidden;
+
+	user-select: none;
+
+	&.ready {
+		display: inline-flex;
+	}
+}
+
+.listen-live-button {
+	display: flex;
+	flex-direction: row;
+	align-items: stretch;
+	justify-content: space-between;
+
+	width: 100%;
+	min-width: 200px;
+	max-width: 200px;
+
+	height: 60px;
+	max-height: 100%;
+
+	padding: 5px;
+
+	position: relative;
+	overflow: hidden;
+
+	cursor: wait;
+	.interactive & {
+		cursor: pointer;
+	}
+
+	line-height: 1.2;
+
+	&::before {
+		content: "";
+		display: block;
+		width: 100%;
+		height: 100%;
+		position: absolute;
+		z-index: 0;
+		left: 0;
+		top: 0;
+		background-color: var(--highlightColor);
+		opacity: 0;
+		transition: opacity 0.2s;
+	}
+
+	&:hover::before {
+		opacity: 0.1;
+	}
+}
+
+.play-icon-container {
+	flex: 0 0 35px;
+	width: 35px;
+	height: 35px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	align-self: center;
+	justify-self: center;
+
+	margin-right: 4px;
+
+	position: relative;
+	z-index: 0;
+
+	.play-icon {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border-radius: 50%;
+		width: 30px;
+		height: 30px;
+		position: relative;
+		z-index: 2;
+		filter: drop-shadow(0 0 10px #0008);
+
+		.playing &::before {
+			--waveLeft: 0%;
+			--waveTop: 10%;
+			--fromOpacity: 0;
+			--toOpacity: 0.3;
+			--toSize: 1100%;
+			--waveSpeed: 4s;
+			@extend .extendWave;
+		}
+
+		.activity &::before {
+			content: "";
+			display: block;
+			width: 120%;
+			height: 120%;
+
+			position: absolute;
+			left: -10%;
+			top: -10%;
+			//transform: translate(-50%, -50%);
+
+			border-top: 3px solid var(--textColor);
+			border-right: 2px solid transparent;
+			border-left: 2px dotted var(--textColor);
+			border-radius: 50%;
+
+			opacity: 0.5;
+
+			animation: 1.8s linear infinite rotatePlay;
+
+			will-change: transform, opacity;
+
+			@keyframes rotatePlay {
+				0% {
+					transform: rotate(0deg);
+				}
+				50% {
+					transform: rotate(180deg);
+					opacity: 0.7;
+				}
+				100% {
+					transform: rotate(360deg);
+				}
+			}
+		}
+	}
+
+	.playing & {
+		&::before,
+		&::after {
+			--waveDelay: 0.3s;
+			--waveSpeed: 1.2s;
+			--toSize: 180%;
+			@extend .extendWave;
+		}
+		&::before {
+			--waveDelay: 1s;
+			--waveSpeed: 1.5s;
+			--toSize: 230%;
+		}
+	}
+}
+
+.label-area {
+	flex: 1 0;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	justify-content: center;
+	align-self: center;
+	justify-self: flex-start;
+
+	position: relative;
+	z-index: 2;
+
+	font-size: 1em;
+	line-height: 1.15;
+	text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.1);
+
+	.scroll {
+		mask-image: linear-gradient(
+			to right,
+			transparent 0%,
+			black 3px,
+			black calc(100% - 6px),
+			transparent 100%
+		);
+	}
+
+	.playing-label {
+		font-size: 8.5px;
+		letter-spacing: 0.055em;
+		line-height: 1;
+		text-transform: uppercase;
+		opacity: 0.85;
+	}
+
+	.state {
+		font-size: 1.69em;
+		font-stretch: 87.5%;
+		font-weight: 700;
+
+		.stopped & {
+			line-height: 1;
+			text-transform: uppercase;
+		}
+		.activity & {
+			font-size: 1.55em;
+		}
+		.playing & {
+			font-size: 1.4em;
+		}
+	}
+
+	.cue {
+		font-size: 1em;
+		opacity: 0.95;
+	}
+}
+
+.dropdown-handle {
+	flex: 0 0 40px;
+	width: 40px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	justify-self: flex-end;
+
+	padding: 8px;
+
+	border-left: 2px groove rgba(255, 255, 255, 0.3);
+	border-left: 2px groove
+		color-mix(in srgb, var(--textColor) 30%, transparent);
+
+	position: relative;
+	z-index: 2;
+	overflow: hidden;
+
+	svg {
+		opacity: 0.85;
+	}
+
+	&:before {
+		content: "";
+		display: block;
+		width: 100%;
+		height: 100%;
+		position: absolute;
+		left: 0;
+		top: 0;
+		z-index: -1;
+		background-color: var(--highlightColor);
+		opacity: 0.15;
+		transition: opacity 0.2s;
+	}
+
+	&:hover,
+	&:focus-visible {
+		svg {
+			opacity: 1;
+		}
+		&::before {
+			opacity: 0.3;
+		}
+	}
+}
+
+.dropdown-container {
+	display: flex;
+	position: absolute;
+	top: var(--dropdownPosition, 100%);
+	z-index: 2147483640;
+
+	max-width: 100vw;
+
+	border-radius: 0 3px 3px 3px;
+
+	overflow: hidden;
+
+	> div {
+		display: flex;
+	}
+
+	&.align-center {
+		left: 50%;
+		transform: translateX(-50%);
+		border-radius: 3px;
+	}
+	&.align-right {
+		left: var(--buttonRight, 0);
+		transform: translateX(-100%);
+		border-radius: 3px 0 3px 3px;
+	}
+}
+
+.dropdown-inner {
+	background-color: var(--backgroundColor);
+	background-image: linear-gradient(
+		10deg,
+		rgba(0, 0, 0, 0.2) 20%,
+		rgba(0, 0, 0, 0.15) 40%,
+		rgba(0, 0, 0, 0.3) 100%
+	);
+	background-image: linear-gradient(
+		10deg,
+		color-mix(in srgb, var(--highlightColor) 20%, transparent) 20%,
+		color-mix(in srgb, var(--highlightColor) 15%, transparent) 40%,
+		color-mix(in srgb, var(--highlightColor) 30%, transparent) 100%
+	);
+
+	box-shadow: 5px 5px rgba(0, 0, 0, 0.15);
+	width: 300px;
+	max-width: 100%;
+	max-height: 0;
+	overflow: hidden;
+
+	transition: max-height 0.1s, visibility 0.1s;
+
+	position: sticky;
+	right: 0;
+
+	.open & {
+		max-height: 100%;
+	}
+}
+
+.dropdown-station {
+	display: flex;
+	flex-direction: row;
+	gap: 0.75em;
+	line-height: 1.25;
+	position: relative;
+	width: 100%;
+	padding: 1.25em;
+
+	border-bottom: 2px groove rgba(255, 255, 255, 0.4);
+	border-bottom: 2px groove
+		color-mix(in srgb, var(--textColor) 40%, transparent);
+	&:last-child {
+		border-bottom: 0;
+	}
+
+	cursor: wait;
+	.interactive & {
+		cursor: pointer;
+	}
+
+	&::before {
+		content: "";
+		display: block;
+		width: 100%;
+		height: 100%;
+		position: absolute;
+		z-index: -1;
+		left: 0;
+		top: 0;
+		background-color: var(--highlightColor);
+		opacity: 0;
+		transition: opacity 0.15s;
+	}
+
+	&:hover,
+	&:focus-visible {
+		&::before {
+			opacity: 0.2;
+		}
+
+		h2 {
+			text-decoration: underline;
+		}
+	}
+
+	.logo {
+		display: flex;
+		flex-basis: 20%;
+		min-height: 2.5em;
+		width: 20%;
+		height: fit-content;
+		position: relative;
+		opacity: 1;
+		transition: opacity 0.2s;
+
+		.overlay {
+			display: block;
+			width: 2.5em;
+			height: 2.5em;
+			position: absolute;
+			left: 50%;
+			top: 50%;
+			transform: translate(-50%, -50%);
+			opacity: 0;
+			filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.3))
+				drop-shadow(2px 2px 1px rgba(0, 0, 0, 0.3))
+				drop-shadow(0 0 1em #000);
+			transition: opacity 0.15s;
+		}
+	}
+
+	&.playing,
+	&:hover,
+	&:focus-visible {
+		.logo {
+			img {
+				opacity: 0.6;
+			}
+			.overlay {
+				opacity: 1;
+			}
+		}
+	}
+
+	.info {
+		flex-basis: 80%;
+	}
+
+	.status {
+		display: block;
+		width: fit-content;
+		background-color: rgba(0, 0, 0, 0.6);
+		background-color: color-mix(
+			in srgb,
+			var(--highlightColor) 50%,
+			transparent
+		);
+		padding: 0.4em;
+		font-style: normal;
+		font-size: 9px;
+		letter-spacing: 0.03em;
+		line-height: 8px;
+		text-transform: uppercase;
+		margin-top: -0.65em;
+		margin-bottom: 3px;
+		opacity: 0.9;
+
+		&:before {
+			content: "⦿ ";
+			display: inline;
+			color: red;
+		}
+	}
+
+	.nowplaying {
+		display: flex;
+		gap: 0.75em;
+		margin-top: 0.5em;
+		font-size: 0.9em;
+		line-height: 1.4;
+
+		.artwork {
+			max-height: 3em;
+		}
+	}
+}
+
+.scroll-label {
+	display: flex;
+	flex-direction: row;
+	max-width: 100%;
+	position: relative;
+	overflow: hidden;
+
+	span {
+		display: flex;
+		flex: 0 0 auto;
+		flex-direction: row;
+		transform: translate3d(0, 0, 0);
+		will-change: transform;
+	}
+
+	&.scroll span {
+		animation: var(--speed, 10s) infinite linear scrollLabel;
+		--distance: calc(-100% - 2ch);
+
+		&::after {
+			content: attr(data-label);
+			padding-left: 2ch;
+			position: absolute;
+			left: 100%;
+			white-space: nowrap;
+		}
+
+		@keyframes scrollLabel {
+			from {
+				transform: translate3d(0, 0, 0);
+			}
+			to {
+				transform: translate3d(var(--distance), 0, 0);
+			}
+		}
+	}
+}
+
+.extendWave {
+	content: "";
+	background-image: linear-gradient(
+		90deg,
+		transparent 0%,
+		var(--backgroundColor) 100%
+	);
+	border-radius: 50%;
+	position: absolute;
+	z-index: -1;
+	left: var(--waveLeft, 45%);
+	top: var(--waveTop, 50%);
+	transform: translate(-50%, -50%);
+	filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.5));
+
+	animation: var(--waveSpeed, 1s) linear var(--waveDela, 0s) infinite
+		extendWave;
+	//animation: linear 1s infinite extendWave;
+	/*
+	animation-delay: var(--waveDelay, 0);
+	animation-duration: var(--waveSpeed, 1s);
+	animation-timing-function: linear;
+	animation-iteration-count: infinite;
+	animation-name: extendWave;
+	*/
+
+	will-change: width, height, opacity;
+
+	@keyframes extendWave {
+		0% {
+			width: 0;
+			height: 0;
+			opacity: var(--fromOpacity, 0);
+		}
+		70% {
+			width: calc(var(--toSize, 200%) * 0.7);
+			height: calc(var(--toSize, 200%) * 0.7);
+			opacity: var(--toOpacity, 0.65);
+		}
+		100% {
+			width: var(--toSize, 200%);
+			height: var(--toSize, 200%);
+			opacity: var(--endOpacity, 0);
+		}
+	}
+}

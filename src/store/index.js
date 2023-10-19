@@ -1,5 +1,4 @@
-import { configureStore, combineReducers } from '@reduxjs/toolkit';
-import playerStateReducer from './playerStateSlice';
+import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import {
 	createStateSyncMiddleware,
 	initMessageListener,
@@ -7,10 +6,12 @@ import {
 	withReduxStateSync,
 } from 'redux-state-sync';
 
+import config from 'Config';
+
+import playerStateReducer from './playerStateSlice';
+
 const appReducer = withReduxStateSync(
-	combineReducers({
-		playerState: playerStateReducer,
-	})
+	combineReducers({ playerState: playerStateReducer })
 );
 
 const store = configureStore({
@@ -18,8 +19,7 @@ const store = configureStore({
 	middleware: (getDefaultMiddleware) =>
 		getDefaultMiddleware().concat(
 			createStateSyncMiddleware({
-				blacklist: ['persist/PERSIST'],
-				channel: 'cmls_player_channel',
+				channel: `CMLS_PLAYER_REDUX_V${config.STORE_VERSION}`,
 			})
 		),
 });

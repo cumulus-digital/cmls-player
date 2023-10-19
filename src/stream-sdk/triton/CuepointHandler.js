@@ -1,31 +1,20 @@
 import store from 'Store';
 import { playerStateActions } from 'Store/playerStateSlice';
 
+import Logger from 'Utils/Logger';
+const log = new Logger('Triton SDK / CuePointHandler');
+
+import generateIdFromString from 'Utils/generateIdFromString';
 import { fetchItunesArtwork } from 'Utils/iTunesHelper';
 
-import config from 'Config';
-import fixSassJson from 'Utils/fixSassJson';
-config = fixSassJson(config);
-
-import Logger from 'Utils/Logger';
-const log = new Logger('Triton SDK / CuepointHandler');
-
-let player;
-
-/**
- * Initialize online track change handlers
- *
- * @param {object} newPlayer Triton player instance
- */
-export const initTrackCuePointHandler = (newPlayer) => {
-	if (!newPlayer) {
-		throw new Error('You must supply a player object parameter.');
+export function initTrackCuePointHandler() {
+	if (!this.player) {
+		throw new Error('Track Cue Point Handler initialized without player.');
 	}
-	if (!newPlayer.NowPlayingApi) {
+
+	if (!this.player.NowPlayingApi) {
 		throw new Error('Player must have NowPlayingApi module.');
 	}
-
-	player = newPlayer;
 
 	const listeners = {
 		'track-cue-point': onTrackCuePoint.bind(this),
@@ -40,145 +29,140 @@ export const initTrackCuePointHandler = (newPlayer) => {
 			{ event: ev, callback_name: listeners[ev].name },
 			listeners[ev]
 		);
-		player.addEventListener(ev, listeners[ev]);
+		this.player.addEventListener(ev, listeners[ev]);
 	}
-};
+}
 
-/**
- * Handle live track cuepoint events
- */
-export const onTrackCuePoint = (e) => {
-	const { playerState } = store.getState();
-
+export function onTrackCuePoint(e) {
 	const cuePoint = e?.data?.cuePoint;
 
+	const { playerState } = store.getState();
+
+	const logExtra = { event: e, playerState };
+
 	if (!cuePoint) {
-		log.warn('Received a live track cue point without cuePoint data!', {
-			event: e,
-			state: playerState,
-		});
+		log.warn(
+			'Received a live track cue point without cuePoint data!',
+			logExtra
+		);
 		return;
 	}
 
 	const mount = cuePoint.mount;
 	if (!mount) {
-		log.warn('Received a live track cue point without a mount!', {
-			event: e,
-			state: playerState,
-		});
+		log.warn('Received a live track cue point without a mount!', logExtra);
 		return;
 	}
 
-	log.debug('Live track cue point received', {
-		event: e,
-		state: playerState,
-	});
+	log.debug('Live track cue point received', logExtra);
 
 	setCuePoint(mount, cuePoint);
+}
 
-	if (config.fetch_artwork) {
-		// Call itunes artwork fetcher
-	}
-};
-
-/**
- * Handle speech cue points (is this ever used?)
- */
-export const onSpeechCuePoint = (e) => {
+export function fetchArtwork(mount, cuePoint = null) {
 	const { playerState } = store.getState();
 
+	if (!cuePoint) {
+		cuePoint = playerState.cuepoints?.[mount];
+	}
+
+	if (cuePoint) {
+		fetchItunesArtwork(cuePoint.artist, cuePoint.title)
+			.then((artUrl) => {
+				if (artUrl?.length) {
+					log.debug('Setting cuepoint artwork', {
+						mount,
+						cuePoint,
+						artUrl,
+					});
+					store.dispatch(
+						playerStateActions['set/station/cuepoint/artwork']({
+							[mount]: artUrl,
+						})
+					);
+				}
+			})
+			.catch((e) => {});
+	}
+}
+
+export function onSpeechCuePoint(e) {
 	const cuePoint = e?.data?.cuePoint;
 
+	const { playerState } = store.getState();
+
+	const logExtra = { event: e, playerState };
+
 	if (!cuePoint) {
-		log.warn('Received a speach cue point without cuePoint data!', {
-			event: e,
-			state: playerState,
-		});
+		log.warn(
+			'Received a live speech cue point without cuePoint data!',
+			logExtra
+		);
 		return;
 	}
 
 	const mount = cuePoint.mount;
 	if (!mount) {
-		log.warn('Received a speech cue point without a mount!', {
-			event: e,
-			state: playerState,
-		});
+		log.warn('Received a live speech cue point without a mount!', logExtra);
 		return;
 	}
 
-	log.debug('Speech cue point received', {
-		event: e,
-		state: playerState,
-	});
+	log.debug('Live speech cue point received', logExtra);
 
 	setCuePoint(mount, cuePoint);
-};
+}
 
-/**
- * Handle an ad-break-cue-point event
- * @param {Event} e
- * @returns
- */
-export const onAdBreakCuePointStart = (e) => {
+export function onAdBreakCuePointStart(e) {
 	const { playerState } = store.getState();
 
-	const station = playerState.station_data?.[playerState?.playing];
+	const station = playerState.stations[playerState.playing];
 	if (!station) {
-		log.warn('Received an ad break cue without a playing station', {
+		log.warn('Received an ad break cue point without a playing station!', {
 			event: e,
-			state: playerState,
+			playerState,
 		});
 		return;
 	}
 
-	log.debug('Ad break start', { event: e, state: playerState });
+	log.debug('Ad break start', { event: e, playerState });
 
 	setCuePoint(playerState.playing, {
 		artistName: station?.tagline || '',
 		cueTitle: "We'll return after these messages",
 		type: 'ad',
 	});
-};
+}
 
-/**
- * Handle an ad-break-cue-point-complete event
- * @param {Event} e
- * @returns
- */
-export const onAdBreakCuePointComplete = (e) => {
+export function onAdBreakCuePointComplete(e) {
 	const { playerState } = store.getState();
 
-	const station = playerState.station_data?.[playerState?.playing];
+	const station = playerState.stations[playerState.playing];
 	if (!station) {
-		log.warn('Received an ad break cue without a playing station', {
+		log.warn('Received an ad break cue point without a playing station!', {
 			event: e,
-			state: playerState,
-		});
-		return;
-	}
-
-	log.debug('Ad break complete', { event: e, state: playerState });
-	setCuePoint(playerState.playing);
-};
-
-/**
- * Update a registered station's current cuepoint
- *
- * @param {string} mount Station mount ID
- * @param {object} cuePoint
- * @returns {void}
- */
-export const setCuePoint = (mount, cuePoint = {}) => {
-	const { playerState } = store.getState();
-
-	if (!mount || !playerState.station_data?.[mount]) {
-		log.warn('Attempted to set cuepoint without a registered mount', {
-			mount,
-			cuePoint,
 			playerState,
 		});
 		return;
 	}
+
+	log.debug('Ad break complete', { event: e, playerState });
+	setCuePoint(playerState.playing);
+}
+
+export function setCuePoint(mount, cuePoint = {}) {
+	const { playerState } = store.getState();
+
+	if (!mount || !playerState.stations[mount]) {
+		log.warn('Attempted to set a cue point without a registered mount.', {
+			mount,
+			cuePoint,
+			playerState,
+		});
+
+		return;
+	}
+
+	const station = playerState.stations[mount];
 
 	let cueData = {
 		artist: '',
@@ -190,24 +174,34 @@ export const setCuePoint = (mount, cuePoint = {}) => {
 	if (!cuePoint) {
 		cueData = {
 			...cueData,
-			artist: playerState.staton_data[mount]?.name || '',
-			title: playerState.station_data[mount]?.tagline || '',
+			artist: station.name || '',
+			title: station.tagline || '',
 		};
 	} else {
 		cueData = {
 			...cueData,
-			artist: cuePoint?.artistName || '',
-			title: cuePoint?.cueTitle || '',
-			track_id: cuePoint?.trackID || '',
-			type: cuePoint?.type || '',
+			artist: cuePoint.artistName || '',
+			title: cuePoint.cueTitle || '',
+			track_id: cuePoint.trackID || '',
+			type: cuePoint.type || '',
+		};
+	}
+
+	// If we're playing but no artist or title is set, use our tagline
+	if (playerState.playing && !(cueData.artist && cueData.title)) {
+		cueData = {
+			artist: station.tagline || '',
+			title: '',
+			type: 'tagline',
 		};
 	}
 
 	// If no track id is provided, generate one from artist+title
 	if (!cueData.track_id) {
-		cueData.track_id = generateCuepointTrackId(
-			cueData.artist,
-			cueData.title
+		cueData.track_id = generateIdFromString(
+			[cueData.artist, cueData.title]
+				.filter((k) => (k.trim ? k.trim() : ''))
+				.join(' – ')
 		);
 	}
 
@@ -221,62 +215,8 @@ export const setCuePoint = (mount, cuePoint = {}) => {
 		playerStateActions['set/station/cuepoint']({ [mount]: cueData })
 	);
 
-	if (cueData?.type?.includes('track')) {
-		updateLastTrackCuepointReceived(mount);
-
-		// Fetch artwork
-		fetchItunesArtwork(cueData.artist, cueData.title)
-			.then((artUrl) => {
-				if (artUrl?.length) {
-					log.debug('Got artwork', artUrl);
-					store.dispatch(
-						playerStateActions['set/station/cuepoint/artwork']({
-							[mount]: artUrl,
-						})
-					);
-				} else {
-					store.dispatch(
-						playerStateActions['set/station/cuepoint/artwork']({
-							[mount]: '',
-						})
-					);
-				}
-			})
-			.catch((e) => {
-				store.dispatch(
-					playerStateActions['set/station/cuepoint/artwork']({
-						[mount]: '',
-					})
-				);
-			});
+	if (cueData.type === 'track') {
+		// fetch artwork for track types
+		fetchArtwork(mount, cueData);
 	}
-};
-
-/**
- * Update the time when a station last received a cuepoint
- *
- * @param {string} mount Registered station mount ID
- */
-const updateLastTrackCuepointReceived = (mount) => {
-	store.dispatch(
-		playerStateActions['set/station/last_track_cuepoint_received']({
-			[mount]: Date.now(),
-		})
-	);
-};
-
-/**
- * Generate a track id
- *
- * @param {string} artist
- * @param {string} title
- * @returns {string}
- */
-export const generateCuepointTrackId = (artist, title) => {
-	let value = artist + title;
-	let res = 0;
-	for (let i = 0; i < value.length; i++) {
-		res += value.charCodeAt(i);
-	}
-	return res % 16;
-};
+}
