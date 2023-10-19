@@ -5,6 +5,7 @@ import store from 'Store/index';
 
 import Logger from 'Utils/Logger';
 import { shallowEqual } from 'react-redux';
+import { stream_status } from 'Consts';
 const log = new Logger('MediaSession API');
 
 /**
@@ -28,6 +29,9 @@ if ('mediaSession' in navigator) {
 			navigator.mediaSession.setActionHandler('stop', handleStop);
 			navigator.mediaSession.setActionHandler('pause', handleStop);
 
+			/**
+			 * Set cue point metadata when playing
+			 */
 			let oldCuepoint;
 			store.subscribe(() => {
 				const { playerState } = store.getState();
@@ -38,6 +42,32 @@ if ('mediaSession' in navigator) {
 
 				const station = playerState.stations?.[playerState.playing];
 				if (!station) {
+					return;
+				}
+
+				// If we're "playing" but not PLAYING, give a status...
+				if (playerState.status !== stream_status.LIVE_PLAYING) {
+					const notPlayingMeta = {
+						title: station.name,
+						artist: station.tagline,
+						artwork: [{ src: station.logo }],
+					};
+					switch (playerState.status) {
+						case stream_status.LIVE_BUFFERING:
+							notPlayingMeta.artist = 'Buffering…';
+							break;
+						case stream_status.LIVE_RECONNECTING:
+						case stream_status.LIVE_CONNECTING:
+							notPlayingMeta.artist = 'Connecting…';
+							break;
+						case stream_status.LIVE_PREROLL:
+							notPlayingMeta.artist =
+								'Your stream will begin soon!';
+							break;
+					}
+					navigator.mediaSession.metadata = new MediaMetadata(
+						notPlayingMeta
+					);
 					return;
 				}
 
