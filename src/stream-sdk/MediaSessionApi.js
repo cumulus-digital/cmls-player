@@ -102,7 +102,7 @@ if ('mediaSession' in navigator) {
 				let artsrc;
 
 				if (cuepoint.type.includes('track') && cuepoint.artwork) {
-					if (oldCuepoint.artist === metadata.artist) {
+					if (oldCuepoint?.artist === metadata.artist) {
 						metadata.artist += '­';
 					}
 					metadata.artwork = [{ src: cuepoint.artwork }];
