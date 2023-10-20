@@ -44,9 +44,12 @@ export default function ListenLive(props) {
 			/* webpackMode: 'lazy' */
 			/* webpackPrefetch: true */
 			/* wepackPreload: true */
-			'./style.scss?inline'
+			'./style.scss?object'
 		).then((style) => {
-			style.default.use({ target: containerRef.current.parentNode });
+			containerRef.current.parentNode.adoptedStyleSheets = [
+				style.default,
+			];
+			//style.default.use({ target: containerRef.current.parentNode });
 		});
 	}, []);
 

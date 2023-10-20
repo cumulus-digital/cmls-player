@@ -56,6 +56,8 @@ module.exports = (env) => {
 		output: {
 			filename: '[name].js',
 			path: path.resolve(__dirname, 'dist'),
+			chunkLoadingGlobal: 'webpackChunkCmlsPlayer',
+			chunkFilename: '[name].[chunkhash].js',
 		},
 		resolve: {
 			alias: {
@@ -144,6 +146,22 @@ module.exports = (env) => {
 								...cssLoaders,
 							],
 						},
+						{
+							test: /.(c|sc|sa)ss$/,
+							resourceQuery: /object/,
+							use: [
+								{
+									loader: 'css-loader',
+									options: {
+										sourceMap: !isProduction,
+										exportType: 'css-style-sheet',
+									},
+								},
+								...cssLoaders.filter(
+									(mod) => mod.loader !== 'css-loader'
+								),
+							],
+						},
 						// Any other style compilation
 						{
 							test: /\.(c|sc|sa)ss$/,
@@ -180,7 +198,7 @@ module.exports = (env) => {
 			new CleanWebpackPlugin(),
 			new MiniCssExtractPlugin({
 				filename: '[name].css',
-				chunkFilename: (pathData) => '[name].css',
+				chunkFilename: '[name].[chunkhash].css',
 			}),
 		],
 
