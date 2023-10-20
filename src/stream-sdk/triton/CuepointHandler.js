@@ -19,6 +19,7 @@ export function initTrackCuePointHandler() {
 	const listeners = {
 		'track-cue-point': onTrackCuePoint.bind(this),
 		'speech-cue-point': onSpeechCuePoint.bind(this),
+		'custom-cue-point': onCustomCuePoint.bind(this),
 		'ad-break-cue-point': onAdBreakCuePointStart.bind(this),
 		'ad-break-cue-point-complete': onAdBreakCuePointComplete.bind(this),
 	};
@@ -110,6 +111,10 @@ export function onSpeechCuePoint(e) {
 	log.debug('Live speech cue point received', logExtra);
 
 	setCuePoint(mount, cuePoint);
+}
+
+export function onCustomCuePoint(e) {
+	log.debug('Custom cue point received', e);
 }
 
 export function onAdBreakCuePointStart(e) {

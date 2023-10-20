@@ -102,17 +102,12 @@ if ('mediaSession' in navigator) {
 				let artsrc;
 
 				if (cuepoint.type.includes('track') && cuepoint.artwork) {
-					artsrc = cuepoint.artwork;
+					if (oldCuepoint.artist === metadata.artist) {
+						metadata.artist += '­';
+					}
+					metadata.artwork = [{ src: cuepoint.artwork }];
 				} else if (station.logo) {
-					artsrc = station.logo;
-				}
-
-				if (artsrc) {
-					metadata.artwork = [
-						{
-							src: artsrc,
-						},
-					];
+					metadata.artwork = [{ src: station.logo }];
 				}
 
 				// Ad tracks use the station tagline for the artist.

@@ -36,6 +36,7 @@ export function initOfflineNowPlaying() {
 	const interval = config.offline_nowplaying_interval || 60000;
 	nowPlayingInterval = setInterval(nowPlayingTick.bind(this), interval);
 
+	/*
 	document.addEventListener('visibilitychange', () => {
 		if (document.hidden) {
 			log.debug('Tab hidden, pausing now playing interval');
@@ -45,6 +46,7 @@ export function initOfflineNowPlaying() {
 			store.dispatch(playerStateActions['set/fetch_nowplaying'](true));
 		}
 	});
+	*/
 
 	log.debug('Offline Now Playing interval has begun.', { interval });
 	nowPlayingTick.call(this);

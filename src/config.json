@@ -3,7 +3,7 @@
 	"siteframe_id": "cmls_siteframe",
 	"sdk_id": "'cmls-player-sdk-connector'",
 	"mediaplayer_id_prefix": "cmlsmediaplayer",
-	"minutes_between_preroll": 0,
+	"minutes_between_preroll": 5,
 	"fetch_artwork": false,
 	"offline_nowplaying_interval": 120000,
 	"max_unresolved_nowplaying_requests": 10

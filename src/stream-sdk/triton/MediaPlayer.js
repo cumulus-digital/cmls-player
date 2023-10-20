@@ -120,7 +120,7 @@ export class MediaPlayer {
 
 		if (!this.isTimeForAnotherPreroll()) {
 			log.debug(
-				'Last preroll was less than minutes_betwee_preroll',
+				'Last preroll was less than minutes_between_preroll',
 				playerState.minutes_between_preroll
 			);
 			return this.onPlaybackComplete();
