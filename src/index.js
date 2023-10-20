@@ -41,14 +41,14 @@ function CmlsPlayerProvider(props) {
 	useLayoutEffect(() => {
 		log.debug('Parsing markup config');
 		appSignals.sdk.type.value = props?.sdk || 'triton';
-		const minutes_betwee_preroll = parseInt(
+		const minutes_between_preroll = parseInt(
 			props?.['minutes-between-preroll']
 		);
 		dispatch(
 			playerStateActions['set/minutes_between_preroll'](
-				minutes_betwee_preroll !== NaN
-					? minutes_betwee_preroll
-					: config.minutes_betwee_preroll
+				minutes_between_preroll !== NaN
+					? minutes_between_preroll
+					: config.minutes_between_preroll
 			)
 		);
 
