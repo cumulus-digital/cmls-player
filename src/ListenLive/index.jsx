@@ -20,17 +20,11 @@ import { AppContext } from '@/signals';
 import useLogRender from 'Utils/useLogRender';
 
 export default function ListenLive(props) {
-	//const ready = useSelector(playerStateSelects.ready);
 	const appState = useContext(AppContext);
-
-	if (!appState.sdk.ready.value) {
-		return;
-	}
 
 	useLogRender('ListenLive');
 
 	const interactive = useSelector(playerStateSelects.interactive);
-	const playing = useSelector(playerStateSelects.playing);
 	const status = useSelector(playerStateSelects.status);
 	const stations_count = useSelector(playerStateSelects['stations/count']);
 
@@ -54,10 +48,9 @@ export default function ListenLive(props) {
 	}, []);
 
 	return (
-		<>
-			<div
-				ref={containerRef}
-				class={`
+		<div
+			ref={containerRef}
+			class={`
 			listen-live-container
 			${appState.sdk.ready.value ? 'ready' : null}
 			${stations_count > 1 ? 'multi-station' : 'single-station'}
@@ -70,10 +63,9 @@ export default function ListenLive(props) {
 			}
 			${interactive ? 'interactive' : ''}
 		`}
-			>
-				<ListenLiveButton />
-				{stations_count > 1 && <Dropdown />}
-			</div>
-		</>
+		>
+			<ListenLiveButton />
+			{stations_count > 1 && <Dropdown />}
+		</div>
 	);
 }

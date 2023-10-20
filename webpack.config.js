@@ -5,6 +5,7 @@ const browserslist = require('browserslist');
 const TerserPlugin = require('terser-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const { ModuleFederationPlugin } = require('webpack').container;
 
 module.exports = (env) => {
 	const isProduction = env.NODE_ENV === 'production';
@@ -195,6 +196,9 @@ module.exports = (env) => {
 			],
 		},
 		plugins: [
+			new ModuleFederationPlugin({
+				runtime: 'cmls-player',
+			}),
 			new CleanWebpackPlugin(),
 			new MiniCssExtractPlugin({
 				filename: '[name].css',

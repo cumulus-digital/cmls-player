@@ -9,6 +9,7 @@ import { playerStateSelects } from 'Store/playerStateSlice';
 
 import { AppContext } from '@/signals';
 import useLogRender from 'Utils/useLogRender';
+import { useMemo } from 'react';
 
 export default forwardRef(function DropdownContainer(props, ref) {
 	useLogRender('DropdownContainer');
@@ -134,7 +135,7 @@ export default forwardRef(function DropdownContainer(props, ref) {
 	 *
 	 * @returns {array}
 	 */
-	const outputStations = () => {
+	const stationsOutput = useMemo(() => {
 		return Object.values(stations)
 			?.sort((a, b) => {
 				// Primary is first
@@ -147,7 +148,7 @@ export default forwardRef(function DropdownContainer(props, ref) {
 			.map((station, index) => (
 				<Station {...station} focus={index === focusStation} />
 			));
-	};
+	}, [stations]);
 
 	return (
 		<div
@@ -164,7 +165,7 @@ export default forwardRef(function DropdownContainer(props, ref) {
 		>
 			<div>
 				<div class="dropdown-inner">
-					{appState.dropdown_open.value && outputStations()}
+					{appState.dropdown_open.value && stationsOutput}
 				</div>
 			</div>
 		</div>

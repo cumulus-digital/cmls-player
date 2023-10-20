@@ -1,5 +1,5 @@
 import { h } from 'preact';
-import { useContext, useEffect } from 'preact/hooks';
+import { useContext, useMemo } from 'preact/hooks';
 
 import ScrollLabel from 'Generics/ScrollLabel';
 import { playerStateSelects } from 'Store/playerStateSlice';
@@ -14,7 +14,7 @@ export default function LabelArea({ buttonLabel, cueLabel }) {
 	const appState = useContext(AppContext);
 	const status = useSelector(playerStateSelects.status);
 
-	const showNowPlaying = () => {
+	const showNowPlaying = useMemo(() => {
 		// don't show if we're not playing
 		if (status !== stream_status.LIVE_PLAYING) {
 			return;
@@ -26,7 +26,7 @@ export default function LabelArea({ buttonLabel, cueLabel }) {
 		}
 
 		return <div class="playing-label">Now playing</div>;
-	};
+	}, [status, cueLabel, appState.button_height.value]);
 	return (
 		<div
 			class={`
@@ -34,7 +34,7 @@ export default function LabelArea({ buttonLabel, cueLabel }) {
 			${cueLabel?.length ? 'has-cue-label' : ''}
 			`}
 		>
-			{showNowPlaying()}
+			{showNowPlaying}
 			<ScrollLabel
 				tagName="h1"
 				speedModifier="3"

@@ -108,9 +108,14 @@ export default forwardRef(function DropdownHandle(props, me) {
 			aria-haspopup="true"
 			aria-expanded={appState.dropdown_open.value ? true : null}
 			aria-controls={props.containerId}
-			disabled={!interactive}
+			disabled={!(interactive && appState.sdk.ready.value)}
 		>
-			{appState.dropdown_open.value ? <IconAngleUp /> : <IconAngleDown />}
+			{appState.sdk.ready.value &&
+				(appState.dropdown_open.value ? (
+					<IconAngleUp />
+				) : (
+					<IconAngleDown />
+				))}
 		</button>
 	);
 });

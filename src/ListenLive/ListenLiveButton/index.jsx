@@ -1,4 +1,4 @@
-import { h } from 'preact';
+import { h, Fragment } from 'preact';
 import {
 	useState,
 	useCallback,
@@ -61,11 +61,17 @@ export default function ListenLiveButton(props) {
 	 * Track height of button
 	 */
 	useEffect(() => {
-		const rect = buttonRef?.current?.getBoundingClientRect();
-		if (rect) {
-			appState.button_height.value = rect.height;
-		}
-	});
+		const watcher = setInterval(() => {
+			const height = buttonRef.current?.offsetHeight;
+			if (height && height !== appState.button_height.value) {
+				appState.button_height.value = height;
+			}
+		}, 200);
+
+		return () => {
+			clearInterval(watcher);
+		};
+	}, [buttonRef]);
 
 	const handleKeyUp = useCallback(
 		(e) => {
@@ -114,7 +120,9 @@ export default function ListenLiveButton(props) {
 			disabled={!(interactive && appState.sdk.ready.value)}
 		>
 			<ActionIcon playing={playing} />
-			<LabelArea buttonLabel={buttonLabel} cueLabel={cueLabel} />
+			{appState.sdk.ready.value && (
+				<LabelArea buttonLabel={buttonLabel} cueLabel={cueLabel} />
+			)}
 		</button>
 	);
 }

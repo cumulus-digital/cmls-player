@@ -61,7 +61,7 @@ button {
 	text-decoration-thickness: from-font;
 	text-underline-offset: 0.2em;
 
-	display: none;
+	display: inline-flex;
 
 	background-color: var(--backgroundColor);
 	background-image: linear-gradient(
@@ -85,8 +85,25 @@ button {
 
 	user-select: none;
 
+	opacity: 0.8;
+	transition: opacity 0.5s;
+
 	&.ready {
-		display: inline-flex;
+		opacity: 1;
+		animation: none;
+	}
+
+	animation: 1s linear infinite suspense;
+	@keyframes suspense {
+		0% {
+			opacity: 0.8;
+		}
+		50% {
+			opacity: 0.7;
+		}
+		100% {
+			opacity: 0.8;
+		}
 	}
 }
 
@@ -109,7 +126,7 @@ button {
 	overflow: hidden;
 
 	cursor: wait;
-	.interactive & {
+	.ready.interactive & {
 		cursor: pointer;
 	}
 
@@ -179,8 +196,8 @@ button {
 		.activity &::before {
 			content: "";
 			display: block;
-			width: 125%;
-			height: 125%;
+			width: 120%;
+			height: 120%;
 
 			position: absolute;
 			left: -10%;
@@ -306,6 +323,14 @@ button {
 
 	svg {
 		opacity: 0.85;
+	}
+
+	cursor: wait;
+	.ready.interactive & {
+		cursor: s-resize;
+		&.open {
+			cursor: n-resize;
+		}
 	}
 
 	&:before {
@@ -565,7 +590,7 @@ button {
 .extendWave {
 	content: "";
 	background-image: linear-gradient(
-		90deg,
+		80deg,
 		transparent 0%,
 		var(--backgroundColor) 100%
 	);
@@ -591,9 +616,7 @@ button {
 			//height: 0;
 			opacity: var(--fromOpacity, 0);
 		}
-		70% {
-			//width: calc(var(--toSize, 200%) * 0.7);
-			//height: calc(var(--toSize, 200%) * 0.7);
+		50% {
 			opacity: var(--toOpacity, 0.65);
 		}
 		100% {
