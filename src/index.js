@@ -19,7 +19,7 @@ import ListenLive from './ListenLive';
 import { appSignals, AppContext } from './signals';
 
 import(
-	/* webpackChunkName: 'cmls-player-outer' */
+	/* webpackChunkName: 'outer' */
 	/* webpackMode: 'lazy' */
 	/* webpackPrefetch: true */
 	/* webpackPreload: true */
@@ -40,10 +40,16 @@ function CmlsPlayerProvider(props) {
 	 */
 	useLayoutEffect(() => {
 		log.debug('Parsing markup config');
+
 		appSignals.sdk.type.value = props?.sdk || 'triton';
-		const minutes_between_preroll = parseInt(
-			props?.['minutes-between-preroll']
-		);
+
+		// runtime configurable minutes between preroll
+		let minutes_between_preroll = config.minutes_between_preroll;
+		if (props?.['minutes-between-preroll'] !== undefined) {
+			minutes_between_preroll =
+				parseInt(props?.['minutes-between-preroll']) ||
+				minutes_between_preroll;
+		}
 		dispatch(
 			playerStateActions['set/minutes_between_preroll'](
 				minutes_between_preroll !== NaN

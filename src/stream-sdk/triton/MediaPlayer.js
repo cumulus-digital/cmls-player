@@ -62,14 +62,23 @@ export class MediaPlayer {
 	isTimeForAnotherPreroll() {
 		const { playerState } = store.getState();
 
-		if (playerState.minutes_between_preroll && playerState.last_preroll) {
+		if (playerState?.last_preroll) {
+			const msSinceLastPreroll = Date.now() - playerState?.last_preroll;
+			const seconds = Math.floor(Math.abs(msSinceLastPreroll) / 1000);
+			const minutes = Math.floor(seconds / 60);
+
+			log.debug('Time since last preroll:', {
+				minutes,
+				seconds,
+			});
 			if (
-				Date.now() - playerState.last_preroll <
+				msSinceLastPreroll <
 				playerState.minutes_between_preroll * 60000
 			) {
 				return false;
 			}
 		}
+
 		return true;
 	}
 
