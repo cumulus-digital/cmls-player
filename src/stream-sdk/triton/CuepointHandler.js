@@ -172,7 +172,7 @@ export function setCuePoint(mount, cuePoint = {}) {
 	let cueData = {
 		artist: cuePoint.artistName || station.name || '',
 		title: cuePoint.cueTitle || station.tagline || '',
-		track_id: cuePoint.trackId || '',
+		track_id: cuePoint.trackID || '',
 		type: cuePoint.type || '',
 	};
 
