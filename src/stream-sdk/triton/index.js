@@ -22,6 +22,7 @@ import { batch } from 'react-redux';
 
 import { appSignals } from '@/signals';
 import { CuePoint } from 'Store/CuePoint';
+import { setCuePoint } from './CuePointHandler';
 
 export class TritonSDK {
 	static player;
@@ -204,12 +205,8 @@ export class TritonSDK {
 		log.debug('Stopping', wasPlaying);
 		batch(() => {
 			if (wasPlaying) {
-				log.debug('Clearing cuepoint', wasPlaying);
-				store.dispatch(
-					playerStateActions['set/station/cuepoint']({
-						[wasPlaying]: {},
-					})
-				);
+				log.debug('Resetting cuepoint', wasPlaying);
+				setCuePoint(wasPlaying, false);
 			}
 			store.dispatch(playerStateActions['set/playing'](false));
 			if (wasStatus !== stream_status.LIVE_PLAYING) {

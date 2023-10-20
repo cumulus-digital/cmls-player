@@ -170,12 +170,13 @@ export function setCuePoint(mount, cuePoint = {}) {
 	const station = playerState.stations[mount];
 
 	let cueData = {
-		artist: '',
-		title: '',
-		track_id: '',
-		type: '',
+		artist: cuePoint.artistName || station.name || '',
+		title: cuePoint.cueTitle || station.tagline || '',
+		track_id: cuePoint.trackId || '',
+		type: cuePoint.type || '',
 	};
 
+	/*
 	if (!cuePoint) {
 		cueData = {
 			...cueData,
@@ -191,6 +192,7 @@ export function setCuePoint(mount, cuePoint = {}) {
 			type: cuePoint.type || '',
 		};
 	}
+	*/
 
 	// If we're playing but no artist or title is set, use our tagline
 	if (playerState.playing && !(cueData.artist && cueData.title)) {

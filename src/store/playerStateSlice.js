@@ -122,7 +122,7 @@ const playerStateSlice = createSlice({
 					new CuePoint(payload[mount])
 				);
 				state.cuepoints[mount] = cuePoint;
-				if (cuePoint.type?.includes('track')) {
+				if (cuePoint?.type.includes('track')) {
 					state.stations[mount].last_cuepoint = Date.now();
 				}
 			}
