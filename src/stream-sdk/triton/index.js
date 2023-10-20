@@ -40,6 +40,7 @@ export class TritonSDK {
 		this.scriptTag = (
 			<script
 				id={config.sdk_id}
+				class="do-not-remove"
 				async={true}
 				src={scriptUrl}
 				onLoad={this.onScriptLoad.bind(self)}
@@ -122,6 +123,12 @@ export class TritonSDK {
 		return this.player;
 	}
 
+	static sendMessage(message) {
+		[window.parent, window[config.siteframe_id]].forEach((w) => {
+			w?.postMessage(message, '*');
+		});
+	}
+
 	static getPlayer() {
 		return this.player;
 	}
@@ -179,13 +186,10 @@ export class TritonSDK {
 			this.onPlayMessage(mount);
 		} else {
 			log.debug('Sending play message to parent');
-			window[config.siteframe_id]?.postMessage(
-				{
-					action: 'cmls-player:play',
-					mount,
-				},
-				'*'
-			);
+			this.sendMessage({
+				action: 'cmls-player:play',
+				mount,
+			});
 		}
 	}
 
@@ -227,12 +231,9 @@ export class TritonSDK {
 			this.onStopMessage();
 		} else {
 			log.debug('Sending stop message to parent');
-			window[config.siteframe_id]?.postMessage(
-				{
-					action: 'cmls-player:stop',
-				},
-				'*'
-			);
+			this.sendMessage({
+				action: 'cmls-player:stop',
+			});
 		}
 	}
 
