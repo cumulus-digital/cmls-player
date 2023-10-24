@@ -12,7 +12,7 @@ const useMarquee = (ref) => {
 	const [shouldScroll, setShouldScroll] = useState(false);
 
 	const testSize = () => {
-		if (!ref.current || !ref.current.firstChild) {
+		if (!ref?.current?.firstChild?.offsetWidth) {
 			return;
 		}
 
@@ -24,8 +24,6 @@ const useMarquee = (ref) => {
 			setShouldScroll(false);
 		}
 	};
-
-	useEffect(() => testSize());
 
 	let testInterval;
 	useEffect(() => {
