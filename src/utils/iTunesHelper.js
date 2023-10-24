@@ -1,3 +1,4 @@
+import fetchJsonp from 'fetch-jsonp';
 import store from 'Store';
 
 import Logger from 'Utils/Logger';
@@ -86,23 +87,31 @@ export const searchItunes = (term) => {
 	term = sanitizeTerm(term);
 
 	const url = new URL(SEARCH_API_URL);
-	url.search = new URLSearchParams({
+	const search = new URLSearchParams({
 		term,
 		country: playerState.country || 'us',
-		media: 'music',
+		//media: 'music', // Causes iOS requests to redirect to musics:// urls?!
 		entity: 'song',
 		//attribute: 'songTerm',
 		limit: 1,
 		lang: playerState.lang || 'en_us',
 		explicit: playerState.allow_explicit_covers || 'No',
 		version: 2,
-		//_: Date.now(),
-	}).toString();
+		_: Date.now(),
+	});
+	url.search = search.toString();
 
 	const controller = new AbortController();
 	let abort = setTimeout(() => controller.abort(), 3000);
+
+	log.debug('Making iTunes search request', search);
 	return new Promise((resolve, reject) => {
-		fetch(url, { signal: controller.signal })
+		fetch(url.toString(), {
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			signal: controller.signal,
+		})
 			.then((response) => response.json())
 			.then((data) => {
 				if (data?.results?.length) {
