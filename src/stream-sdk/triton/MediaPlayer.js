@@ -38,11 +38,13 @@ export class MediaPlayer {
 
 		this.el = (
 			<div class={`cmls-player-mediaplayer do-not-remove`}>
-				<div class="container">
-					<div
-						id={`${config.mediaplayer_id_prefix}-${SDK.mediaPlayerId}`}
-						class="player"
-					></div>
+				<div class="outer-container">
+					<div class="inner-container">
+						<div
+							id={`${config.mediaplayer_id_prefix}-${SDK.mediaPlayerId}`}
+							class="player"
+						></div>
+					</div>
 				</div>
 			</div>
 		);
