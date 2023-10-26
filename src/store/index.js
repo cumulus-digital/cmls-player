@@ -5,6 +5,7 @@ import {
 	initStateWithPrevTab,
 	withReduxStateSync,
 } from 'redux-state-sync';
+import { isEqual } from 'lodash';
 
 import config from 'Config';
 
@@ -28,3 +29,27 @@ initMessageListener(store);
 initStateWithPrevTab(store);
 
 export default store;
+
+export class observeStore {
+	#currentState;
+	#store;
+	#onChange;
+	#select;
+	unsubscribe;
+
+	constructor(store, onChange = () => {}, select = (state) => state) {
+		this.#store = store;
+		this.#onChange = onChange;
+		this.#select = select;
+		this.unsubscribe = this.#store.subscribe(this.#handleChange.bind(this));
+		this.#handleChange();
+	}
+
+	#handleChange() {
+		let nextState = this.#select(this.#store.getState());
+		if (!isEqual(nextState, this.#currentState)) {
+			this.#onChange(nextState, this.#currentState);
+			this.#currentState = nextState;
+		}
+	}
+}
