@@ -81,7 +81,7 @@ function nowPlayingTick(forced) {
 		const last_cuepoint = station.last_cuepoint;
 		const unresolved_requests = station.unresolved_nowplaying_requests;
 		const max_unresolved_requests =
-			config.max_unresolved_nowplaying_requests || 10;
+			config.max_unresolved_nowplaying_requests || 5;
 
 		// Do not fetch if station is currently playing
 		if (mount === playerState.playing) {
@@ -95,10 +95,16 @@ function nowPlayingTick(forced) {
 
 		// Do not fetch if station has too many unresolved requests
 		if (unresolved_requests > max_unresolved_requests) {
-			// If last cuepoint was more than 30 minutes ago, re-enable fetch for next interval
-			if (Date.now() - last_cuepoint > 1800000) {
+			// try once every 10 minutes until we hit max * 1.5 unresolved requests
+			if (
+				unresolved_requests < max_unresolved_requests * 1.5 &&
+				Date.now() - last_cuepoint > 600000
+			) {
+				log.debug(
+					'Attempting a failsave now playing request after 10 minutes of being disabled.'
+				);
 				enableFetch(mount);
-				resetUnresolvedRequests(mount);
+				//incrementUnresolvedRequests(mount);
 				continue;
 			} else {
 				log.warn(
@@ -178,6 +184,7 @@ const listLoaded = (e) => {
 		station,
 	});
 	setCuePoint(mount, cueData);
+	resetUnresolvedRequests(mount);
 };
 
 /**
