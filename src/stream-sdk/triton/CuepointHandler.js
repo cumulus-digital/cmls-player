@@ -67,7 +67,14 @@ export function fetchArtwork(mount, cuePoint = null) {
 		cuePoint = playerState.cuepoints?.[mount];
 	}
 
-	if (cuePoint) {
+	const station = playerState.stations[mount];
+
+	if (cuePoint && cuePoint.artist !== station?.name && !cuePoint?.artwork) {
+		store.dispatch(
+			playerStateActions['set/station/cuepoint/artwork']({
+				[mount]: false,
+			})
+		);
 		fetchItunesArtwork(cuePoint.artist, cuePoint.title)
 			.then((artUrl) => {
 				if (artUrl?.length) {
@@ -81,9 +88,23 @@ export function fetchArtwork(mount, cuePoint = null) {
 							[mount]: artUrl,
 						})
 					);
+				} else {
+					log.debug('No artwork found', { mount, cuePoint, artUrl });
+					store.dispatch(
+						playerStateActions['set/station/cuepoint/artwork']({
+							[mount]: false,
+						})
+					);
 				}
 			})
-			.catch((e) => {});
+			.catch((e) => {
+				log.debug('Could not fetch artwork!', { mount, cuePoint });
+				store.dispatch(
+					playerStateActions['set/station/cuepoint/artwork']({
+						[mount]: false,
+					})
+				);
+			});
 	}
 }
 
@@ -168,6 +189,7 @@ export function setCuePoint(mount, cuePoint = {}) {
 	}
 
 	const station = playerState.stations[mount];
+	const cuepoint = playerState.cuepoints[mount];
 
 	let cueData = {
 		artist: cuePoint.artistName || station.name || '',
@@ -212,15 +234,17 @@ export function setCuePoint(mount, cuePoint = {}) {
 		);
 	}
 
-	log.debug('Setting cue point', {
-		mount,
-		received: cuePoint,
-		using: cueData,
-	});
+	if (cueData.track_id !== cuepoint?.track_id) {
+		log.debug('Setting cue point', {
+			mount,
+			received: cuePoint,
+			using: cueData,
+		});
 
-	store.dispatch(
-		playerStateActions['set/station/cuepoint']({ [mount]: cueData })
-	);
+		store.dispatch(
+			playerStateActions['set/station/cuepoint']({ [mount]: cueData })
+		);
+	}
 
 	if (cueData.type === 'track') {
 		// fetch artwork for track types

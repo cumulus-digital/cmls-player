@@ -11,7 +11,6 @@ import { Station } from './Station';
 import { CuePoint } from './CuePoint';
 
 import { stream_status } from 'Consts';
-import { appSignals } from '@/signals';
 
 const playerStateSlice = createSlice({
 	name: 'playerState',
@@ -24,7 +23,7 @@ const playerStateSlice = createSlice({
 		fetch_nowplaying: true,
 
 		interactive: true,
-		show_cue_label: true,
+		//show_cue_label: true,
 		//dropdown_open: false,
 		//dropdown_position: 0,
 
@@ -61,9 +60,11 @@ const playerStateSlice = createSlice({
 		'set/fetch_nowplaying': (state, { payload }) => {
 			state.fetch_nowplaying = !!payload;
 		},
+		/*
 		'set/show_cue_label': (state, { payload }) => {
 			state.show_cue_label = !!payload;
 		},
+		*/
 
 		/*
 		'set/dropdown_open': (state, { payload }) => {
@@ -151,7 +152,9 @@ const playerStateSlice = createSlice({
 				}
 
 				if (state.cuepoints[mount]) {
-					state.cuepoints[mount].artwork = payload[mount];
+					Object.assign(state.cuepoints[mount], {
+						artwork: payload[mount],
+					});
 				}
 			}
 		},
@@ -221,14 +224,14 @@ const playerStateSlice = createSlice({
 	},
 });
 
-const selectPlaying = (state) => state.playerState.playing;
-const selectActive = (state) => state.playerState.active_station;
-const selectPrimary = (state) => state.playerState.primary_station;
+const selectPlaying = (state) => state.playerState?.playing;
+const selectActive = (state) => state.playerState?.active_station;
+const selectPrimary = (state) => state.playerState?.primary_station;
 const selectStatus = (state) => state.playerState?.status;
 //const selectDropdownOpen = (state) => state.playerState?.dropdown_open;
 const selectStation = (state, station) => {
 	if (station?.mount) {
-		return station;
+		return state.playerState?.stations?.[station.mount];
 	} else {
 		return state.playerState?.stations?.[station];
 	}
@@ -348,9 +351,13 @@ export const playerStateSelects = new (class Selectors {
 		}
 	);
 	'station/cuelabel' = createSelector(
+		(state, station) => selectStation(state, station),
 		(state, station) => this['station/cuepoint'](state, station),
-		(cuepoint) => {
-			return [cuepoint?.artist, cuepoint?.title]
+		(station, cuepoint) => {
+			return [
+				cuepoint?.artist !== station?.name ? cuepoint?.artist : null,
+				cuepoint?.title,
+			]
 				.filter((k) => (k?.trim ? k.trim() : null))
 				.join(' – ');
 		}

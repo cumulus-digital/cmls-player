@@ -1,7 +1,7 @@
 import { h } from 'Utils/createElement';
 
 import store from 'Store';
-import { playerStateActions } from 'Store/playerStateSlice';
+import { playerStateActions, playerStateSelects } from 'Store/playerStateSlice';
 
 import baseConfig from 'Config';
 import fixSassJson from 'Utils/fixSassJson';
@@ -249,5 +249,55 @@ export class TritonSDK {
 			playerStateActions['set/status'](stream_status.LIVE_PREROLL)
 		);
 		this.player.playAd('vastAd', adConfig);
+	}
+
+	static generateLabels() {
+		const state = store.getState();
+
+		const status = playerStateSelects.status(state);
+		const current_station = playerStateSelects['station/current'](state);
+		const cueLabel = playerStateSelects['station/cuelabel'](
+			state,
+			current_station
+		);
+
+		let newButtonLabel = 'Listen Live!';
+		let newCueLabel = current_station?.fetch_nowplaying ? cueLabel : '';
+		switch (status) {
+			case stream_status.LIVE_PREROLL:
+			case stream_status.LIVE_CONNECTING:
+			case stream_status.LIVE_RECONNECTING:
+				newButtonLabel = 'Connecting…';
+				newCueLabel = 'The stream will begin momentarily…';
+				break;
+			case stream_status.LIVE_BUFFERING:
+				newButtonLabel = 'Buffering…';
+				break;
+			case stream_status.LIVE_PLAYING:
+				newButtonLabel = current_station?.name || 'Now Playing';
+				break;
+			case stream_status.LIVE_FAILED:
+				newButtonLabel = 'Stream failed!';
+				newCueLabel = 'Please try again later';
+				break;
+			case stream_status.STATION_NOT_FOUND:
+				newButtonLabel = 'Station not found!';
+				newCueLabel =
+					'Player is misconfigured, please contact the station';
+				break;
+			case stream_status.PLAY_NOT_ALLOWED:
+				newButtonLabel = 'Not Allowed';
+				newCueLabel =
+					'Playback is not allowed at this time, please try again later';
+				break;
+			case stream_status.STREAM_GEOBLOCKED:
+			case stream_status.STREAM_GEO_BLOCKED_ALTERNATE:
+			case stream_status.STREAM_GEO_BLOCKED_NO_ALTERNATE:
+				newButtonLabel = 'Unavailable!';
+				newCueLabel =
+					'Sorry, this content is not available in your area.';
+				break;
+		}
+		return { buttonLabel: newButtonLabel, cueLabel: newCueLabel };
 	}
 }
