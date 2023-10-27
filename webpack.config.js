@@ -10,7 +10,7 @@ const { ModuleFederationPlugin } = require('webpack').container;
 module.exports = (env) => {
 	const isProduction = env.NODE_ENV === 'production';
 	const mode = isProduction ? 'production' : 'development';
-	const host = env.HOST || 'localhost';
+	const host = env.HOST || '0.0.0.0';
 	const port = 34687;
 
 	const cssLoaders = [
@@ -79,6 +79,7 @@ module.exports = (env) => {
 			minimize: isProduction,
 			minimizer: [
 				new TerserPlugin({
+					parallel: true,
 					extractComments: false,
 					terserOptions: {
 						sourceMap: !isProduction,
@@ -99,7 +100,12 @@ module.exports = (env) => {
 						options: {
 							sourceMap: !isProduction,
 							presets: [
-								'@babel/preset-react',
+								[
+									'@babel/preset-react',
+									{
+										runtime: 'automatic',
+									},
+								],
 								[
 									'@babel/preset-env',
 									{
@@ -196,9 +202,11 @@ module.exports = (env) => {
 			],
 		},
 		plugins: [
+			/*
 			new ModuleFederationPlugin({
 				runtime: 'cmls-player',
 			}),
+			*/
 			new CleanWebpackPlugin(),
 			new MiniCssExtractPlugin({
 				filename: '[name].css',
