@@ -178,7 +178,33 @@ window.customElements.define(
 				}
 			});
 
-			//this.innerHTML = '';
+			/**
+			 * Clicking outside of our component closes dropdown
+			 */
+			const handleOutsideClick = (e) => {
+				const path = e.composedPath();
+				if (
+					this &&
+					!path.includes(this) &&
+					!(SDK?.mediaPlayer?.el && path.includes(SDK.mediaPlayer.el))
+				) {
+					console.log('path', path, SDK?.mediaPlayer?.el);
+					//store.dispatch(playerStateActions['set/dropdown_open'](false));
+					appSignals.dropdown_open.value = false;
+				}
+			};
+			window.addEventListener('click', handleOutsideClick.bind(this));
+			window.addEventListener('touchend', handleOutsideClick.bind(this));
+
+			/**
+			 * Escape key closes dropdown
+			 */
+			window.addEventListener('keyup', (e) => {
+				const key = e.key;
+				if (key === 'Esc' || key === 'Escape') {
+					appSignals.dropdown_open.value = false;
+				}
+			});
 
 			SDK.init();
 
@@ -192,30 +218,7 @@ window.customElements.define(
 function CmlsPlayerProvider(props) {
 	const me = useRef(null);
 
-	useLayoutEffect(() => {
-		/**
-		 * Clicking outside of our component closes dropdown
-		 */
-		const handleOutsideClick = (e) => {
-			const path = e.composedPath();
-			if (me?.current?.base && !path.includes(me.current.base)) {
-				//store.dispatch(playerStateActions['set/dropdown_open'](false));
-				appSignals.dropdown_open.value = false;
-			}
-		};
-		window.addEventListener('click', handleOutsideClick);
-		window.addEventListener('touchend', handleOutsideClick);
-
-		/**
-		 * Escape key closes dropdown
-		 */
-		window.addEventListener('keyup', (e) => {
-			const key = e.key;
-			if (key === 'Esc' || key === 'Escape') {
-				appSignals.dropdown_open.value = false;
-			}
-		});
-	}, []);
+	useLayoutEffect(() => {}, []);
 
 	const cssVars = useComputed(() => {
 		const vars = [

@@ -30,11 +30,11 @@
 	backdrop-filter: none;
 	transition: all 0.4s;
 
-	pointer-events: none;
+	//pointer-events: all;
 
 	.outer-container {
 		visibility: hidden;
-		position: fixed;
+		position: absolute;
 		top: 50%;
 		left: 50%;
 		transform: translate(-50%, -50%);
@@ -65,7 +65,7 @@
 		height: 0;
 		padding-bottom: 56.25%;
 		overflow: visible;
-		pointer-events: all;
+		//pointer-events: all;
 		transition: background-color 0.4s, box-shadow 0.3s;
 	}
 
