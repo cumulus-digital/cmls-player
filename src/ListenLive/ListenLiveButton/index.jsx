@@ -1,10 +1,10 @@
 import { h, Fragment } from 'preact';
 import {
-	useState,
 	useCallback,
 	useRef,
 	useEffect,
 	useContext,
+	useMemo,
 } from 'preact/hooks';
 import { shallowEqual, useSelector } from 'react-redux';
 
@@ -20,6 +20,9 @@ import LabelArea from './LabelArea';
 
 import { AppContext } from '@/signals';
 import useLogRender from 'Utils/useLogRender';
+import Artwork from 'Generics/Artwork';
+import { stream_status } from 'Consts';
+import store from 'Store/index';
 
 export default function ListenLiveButton(props) {
 	useLogRender('ListenLiveButton');
@@ -29,65 +32,66 @@ export default function ListenLiveButton(props) {
 	const buttonRef = useRef();
 
 	//const ready = useSelector(playerStateSelects.ready);
+	const status = useSelector(playerStateSelects.status);
 	const interactive = useSelector(playerStateSelects.interactive);
 	const playing = useSelector(playerStateSelects.playing);
 	const current_station = useSelector(
 		playerStateSelects['station/current'],
 		shallowEqual
 	);
-	let { buttonLabel = 'Listen Live!', cueLabel } = useSelector(
+	const cuepoint = useSelector(
 		(state) =>
-			playerStateSelects['station/status_labels'](state, current_station),
+			playerStateSelects['station/cuepoint'](state, current_station),
 		shallowEqual
 	);
 
-	/**
-	 * Handle alt tag
-	 */
-	const [buttonAlt, setButtonAlt] = useState('Listen live now!');
-	useEffect(() => {
+	// Handle alt tag
+	const buttonAlt = useMemo(() => {
 		if (!current_station) {
-			return;
+			return 'Loading...';
 		}
 
 		if (playing) {
-			setButtonAlt(`Stop streaming ${current_station.name}`);
+			return `Stop streaming ${current_station.name}`;
 		} else {
-			setButtonAlt(`Listen live to ${current_station.name}`);
+			return `Listen live to ${current_station.name}`;
 		}
 	}, [playing, current_station]);
 
-	/**
-	 * Track height of button
-	 */
-	useEffect(() => {
-		const watcher = setInterval(() => {
-			const height = buttonRef.current?.offsetHeight;
-			if (height && height !== appState.button_height.value) {
-				appState.button_height.value = height;
-			}
-		}, 200);
+	// Should the button be disabled?
+	const isDisabled = useMemo(() => {
+		return !(interactive && appState.sdk.ready.value);
+	}, [interactive, appState.sdk.ready.value]);
 
-		return () => {
-			clearInterval(watcher);
-		};
-	}, [buttonRef]);
+	const artwork = useMemo(() => {
+		if (
+			status === stream_status.LIVE_PLAYING &&
+			playing &&
+			cuepoint?.artwork
+		) {
+			return (
+				<Artwork
+					url={cuepoint.artwork}
+					alt={
+						cuepoint.artwork &&
+						`Album cover for ${appState.cue_label}`
+					}
+					class="live-artwork"
+				/>
+			);
+		}
+	}, [status, playing, cuepoint]);
 
-	const handleKeyUp = useCallback(
-		(e) => {
-			if (!interactive) {
-				return;
-			}
-
-			const key = e.key;
-			if (key === 'Esc' || key === 'Escape') {
-				e.stopPropagation();
-				e.preventDefault();
-				dispatch(playerStateActions['set/dropdown_open'](false));
-			}
-		},
-		[interactive]
-	);
+	const content = useMemo(() => {
+		if (appState.sdk.ready.value) {
+			return (
+				<>
+					<ActionIcon />
+					<LabelArea />
+				</>
+			);
+		}
+	}, [appState.sdk.ready.value, playing]);
 
 	const togglePlay = useCallback(
 		(e) => {
@@ -111,18 +115,15 @@ export default function ListenLiveButton(props) {
 			ref={buttonRef}
 			class="listen-live-button"
 			onClick={togglePlay}
-			onKeyUp={handleKeyUp}
 			title={buttonAlt}
 			alt={buttonAlt}
 			role="button"
 			tabindex="0"
 			aria-pressed={playing}
-			disabled={!(interactive && appState.sdk.ready.value)}
+			disabled={isDisabled}
 		>
-			<ActionIcon playing={playing} />
-			{appState.sdk.ready.value && (
-				<LabelArea buttonLabel={buttonLabel} cueLabel={cueLabel} />
-			)}
+			{artwork}
+			{content}
 		</button>
 	);
 }

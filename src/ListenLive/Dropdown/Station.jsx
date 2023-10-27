@@ -1,30 +1,26 @@
 import { h } from 'preact';
-import { useEffect, useRef } from 'preact/hooks';
+import { useContext, useEffect, useMemo, useRef } from 'preact/hooks';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 
-/*
-import {
-	IconPlayerPlayFilled as IconPlay,
-	IconPlayerPauseFilled as IconPause,
-} from '@tabler/icons-react';
-*/
-import { FaPlay as IconPlay, FaPause as IconPause } from 'react-icons/fa6';
+import { playerStateSelects } from 'Store/playerStateSlice';
 
-import { playerStateActions, playerStateSelects } from 'Store/playerStateSlice';
-
+import { IconPlay, IconPause } from '@/ListenLive/Icons';
 import Artwork from 'Generics/Artwork';
 
 import { SDK } from '@/stream-sdk';
-import { fetchItunesArtwork } from 'Utils/iTunesHelper';
 import ScrollLabel from 'Generics/ScrollLabel';
 import useLogRender from 'Utils/useLogRender';
+import { AppContext } from '@/signals';
+import { fetchArtwork } from '@/stream-sdk/triton/CuePointHandler';
 
 export default function DropdownStation(props) {
-	useLogRender('DropdownStation');
+	const appState = useContext(AppContext);
 
 	if (!props.mount) {
 		return;
 	}
+
+	useLogRender(`DropdownStation - ${props.mount}`);
 
 	const interactive = useSelector(playerStateSelects.interactive);
 	const playing = useSelector(playerStateSelects.playing);
@@ -56,48 +52,60 @@ export default function DropdownStation(props) {
 		}
 	};
 
-	/**
-	 * Fetch artwork if station supports it
-	 */
-	useEffect(() => {
+	const icon = useMemo(() => {
+		return playing === props.mount ? (
+			<IconPause className="overlay" />
+		) : (
+			<IconPlay className="overlay" />
+		);
+	}, [playing, props.mount]);
+
+	const nowplaying = useMemo(() => {
 		if (
-			cuepoint?.type?.includes('track') &&
-			!cuepoint?.artwork &&
-			cuepoint?.artwork !== false
+			appState.dropdown_open.value &&
+			playing !== props.mount &&
+			cuepoint?.type?.includes('track')
 		) {
-			// Fetch artwork
-			fetchItunesArtwork(cuepoint.artist, cuepoint.title)
-				.then((artUrl) => {
-					if (artUrl?.length) {
-						dispatch(
-							playerStateActions['set/station/cuepoint/artwork']({
-								[props.mount]: artUrl,
-							})
-						);
-					} else {
-						dispatch(
-							playerStateActions['set/station/cuepoint/artwork']({
-								[props.mount]: false,
-							})
-						);
-					}
-				})
-				.catch((e) => {
-					dispatch(
-						playerStateActions['set/station/cuepoint/artwork']({
-							[props.mount]: false,
-						})
-					);
-				});
+			if (cuepoint?.artwork !== false && cuepoint?.artwork !== 1) {
+				// Fetch artwork
+				fetchArtwork(props.mount);
+			}
+
+			return (
+				<div class="nowplaying">
+					<Artwork
+						url={cuepoint?.artwork}
+						alt={cuepoint?.artwork && `Album cover for ${cuelabel}`}
+					/>
+					<div>
+						<h3>
+							{cuepoint.type === 'track'
+								? 'Now Playing'
+								: 'Last Played'}
+							:
+						</h3>
+						<ScrollLabel class="cue" label={cuelabel} />
+					</div>
+				</div>
+			);
 		}
-	}, [cuepoint]);
+	}, [appState.dropdown_open.value, cuepoint, playing]);
+
+	const classname = useMemo(() => {
+		const list = ['dropdown-station'];
+		if (playing === props.mount) {
+			list.push('playing');
+		}
+		if (nowplaying) {
+			list.push('has-cue');
+		}
+		return list.join(' ');
+	}, [playing, props.mount, nowplaying]);
 
 	return (
 		<button
 			ref={me}
-			class={`dropdown-station ${
-				playing === props.mount ? 'playing' : ''
-			}`}
+			class={classname}
 			role="menuitem"
 			name={props.name}
 			alt={`${
@@ -112,9 +120,7 @@ export default function DropdownStation(props) {
 		>
 			<div class="logo">
 				<img src={props.logo} alt={`${props.name} Logo`} />
-				{(playing === props.mount && (
-					<IconPause className="overlay" />
-				)) || <IconPlay className="overlay" />}
+				{icon}
 			</div>
 			<div class="info">
 				{playing === props.mount && (
@@ -122,21 +128,7 @@ export default function DropdownStation(props) {
 				)}
 				<h2 class="name">{props.name}</h2>
 				<div class="tagline">{props.tagline}</div>
-				{cuepoint?.type?.includes('track') && (
-					<div class="nowplaying">
-						<Artwork
-							url={cuepoint?.artwork}
-							alt={
-								cuepoint?.artwork &&
-								`Album cover for ${cuelabel}`
-							}
-						/>
-						<div>
-							<h3>Now Playing:</h3>
-							<ScrollLabel class="cue" label={cuelabel} />
-						</div>
-					</div>
-				)}
+				{nowplaying}
 			</div>
 		</button>
 	);

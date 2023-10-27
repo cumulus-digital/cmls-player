@@ -1,10 +1,10 @@
 import { h, Fragment } from 'preact';
 import {
 	useRef,
-	useEffect,
 	useLayoutEffect,
-	useState,
 	useContext,
+	useEffect,
+	useMemo,
 } from 'preact/hooks';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -18,6 +18,7 @@ import Dropdown from './Dropdown';
 import { stream_status } from 'Consts';
 import { AppContext } from '@/signals';
 import useLogRender from 'Utils/useLogRender';
+import { useComputed } from '@preact/signals';
 
 export default function ListenLive(props) {
 	const appState = useContext(AppContext);
@@ -38,34 +39,67 @@ export default function ListenLive(props) {
 			/* webpackMode: 'lazy' */
 			/* webpackPrefetch: true */
 			/* wepackPreload: true */
-			'./style.scss?object'
+			'./style.scss?inline'
 		).then((style) => {
+			/*
 			containerRef.current.parentNode.adoptedStyleSheets = [
 				style.default,
 			];
-			//style.default.use({ target: containerRef.current.parentNode });
+			*/
+			style.default.use({ target: containerRef.current.parentNode });
 		});
 	}, []);
 
-	return (
-		<div
-			ref={containerRef}
-			class={`
-			listen-live-container
-			${appState.sdk.ready.value ? 'ready' : null}
-			${stations_count > 1 ? 'multi-station' : 'single-station'}
-			${
-				status == stream_status.LIVE_PLAYING
-					? 'playing'
-					: status > 0
-					? 'activity'
-					: 'stopped'
+	/**
+	 * Track various physical characteristics
+	 */
+	useEffect(() => {
+		const watcher = setInterval(() => {
+			const me = containerRef.current;
+			if (me) {
+				appState.button_top.value = me.offsetTop;
+				appState.button_left.value = me.offsetLeft;
+				appState.button_width.value = me.offsetWidth;
+				appState.button_height.value = me.offsetHeight;
 			}
-			${interactive ? 'interactive' : ''}
-		`}
-		>
+		}, 200);
+
+		return () => {
+			clearInterval(watcher);
+		};
+	}, [containerRef]);
+
+	const classnames = useMemo(() => {
+		const classes = [
+			'listen-live-container',
+			stations_count > 1 ? 'multi-station' : 'single-station',
+		];
+		if (appState.sdk.ready.value) {
+			classes.push('ready');
+		}
+		if (status === stream_status.LIVE_PLAYING) {
+			classes.push('playing');
+		} else if (status > 0) {
+			classes.push('activity');
+		} else {
+			classes.push('stopped');
+		}
+		if (interactive) {
+			classes.push('interactive');
+		}
+		return classes.join(' ');
+	}, [status, stations_count, interactive, appState.sdk.ready.value]);
+
+	const useDropdown = useMemo(() => {
+		if (appState.sdk.ready.value && stations_count > 1) {
+			return <Dropdown />;
+		}
+	}, [stations_count, appState.sdk.ready.value]);
+
+	return (
+		<div ref={containerRef} class={classnames}>
 			<ListenLiveButton />
-			{stations_count > 1 && <Dropdown />}
+			{useDropdown}
 		</div>
 	);
 }

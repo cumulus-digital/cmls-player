@@ -22,7 +22,10 @@ export default function ScrollLabel(props) {
 					}`}
 					ref={ref}
 					style={`
-						--speed: ${props.label.length / (props.speedModifier || 4.5)}s;
+						--speed: ${
+							(props.label?.value?.length || props.label.length) /
+							(props.speedModifier || 4.5)
+						}s;
 					`}
 				>
 					<span data-label={props.label}>{props.label}</span>

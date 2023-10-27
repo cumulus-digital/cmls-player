@@ -1,5 +1,5 @@
 import { h } from 'preact';
-import { useState, useEffect, useContext } from 'preact/hooks';
+import { useEffect, useContext } from 'preact/hooks';
 import { forwardRef } from 'preact/compat';
 import { shallowEqual, useSelector } from 'react-redux';
 
@@ -10,6 +10,7 @@ import { playerStateSelects } from 'Store/playerStateSlice';
 import { AppContext } from '@/signals';
 import useLogRender from 'Utils/useLogRender';
 import { useMemo } from 'react';
+import { useComputed } from '@preact/signals';
 
 export default forwardRef(function DropdownContainer(props, ref) {
 	useLogRender('DropdownContainer');
@@ -20,28 +21,60 @@ export default forwardRef(function DropdownContainer(props, ref) {
 	const stations = useSelector(playerStateSelects.stations, shallowEqual);
 	const stations_count = useSelector(playerStateSelects['stations/count']);
 
-	const [focusStation, setFocusStation] = useState(null);
-	const [positionClass, setPositionClass] = useState('align-left');
+	const classname = useComputed(() => {
+		const list = [
+			'dropdown-container',
+			appState.dropdown_open.value ? 'open' : 'closed',
+		];
 
-	const canFocusNextStation = () => {
-		if (focusStation + 1 < stations_count) {
-			return true;
+		let position = 'align-left';
+
+		const me = ref.current;
+		if (me) {
+			const clientWidth =
+				window.innerWidth || document.documentElement.clientWidth;
+
+			const myWidth = me.offsetWidth;
+
+			const buttonCenterOffset =
+				appState.button_left.value -
+				(clientWidth -
+					(appState.button_left.value + appState.button_width.value));
+
+			if (buttonCenterOffset <= 3 && buttonCenterOffset >= -3) {
+				position = 'align-center';
+			} else if (appState.button_left.value + myWidth > clientWidth) {
+				position = 'align-right';
+			}
 		}
-	};
+
+		list.push(position);
+
+		return list.join(' ');
+	});
+
+	useEffect(() => {
+		if (props.focusFirstStation) {
+			appState.dropdown_focus_station.value = 0;
+		}
+	}, [props.focusFirstStation]);
 
 	const focusNextStation = () => {
-		if (focusStation + 1 < stations_count) {
-			setFocusStation(focusStation + 1);
+		const current = appState.dropdown_focus_station.value;
+		const new_focus = current + 1;
+		if (new_focus === stations_count) {
+			appState.dropdown_focus_station.value = 0;
 		} else {
-			setFocusStation(0);
+			appState.dropdown_focus_station.value = new_focus;
 		}
 	};
-
 	const focusPreviousStation = () => {
-		if (focusStation > 0) {
-			setFocusStation(focusStation - 1);
+		const current = appState.dropdown_focus_station.value;
+		const new_focus = current - 1;
+		if (current === 0) {
+			appState.dropdown_focus_station.value = stations_count - 1;
 		} else {
-			setFocusStation(stations_count - 1);
+			appState.dropdown_focus_station.value = new_focus;
 		}
 	};
 
@@ -51,83 +84,25 @@ export default forwardRef(function DropdownContainer(props, ref) {
 		}
 
 		const key = e.key;
-		const stopBubble = () => {
-			e.stopPropagation();
-			e.preventDefault();
-		};
-
 		switch (key) {
-			case 'Tab':
-				if (!canFocusNextStation()) {
-					break;
-				}
 			case 'Down':
 			case 'ArrowDown':
-				stopBubble();
+				e.stopPropagation();
 				focusNextStation();
 				break;
+
 			case 'Up':
 			case 'ArrowUp':
-				stopBubble();
+				e.stopPropagation();
 				focusPreviousStation();
 				break;
+
 			case 'Esc':
 			case 'Escape':
-				//dispatch(playerStateActions['set/dropdown_open'](false));
-				appState.dropdown_open.value = false;
 				props.handleRef?.current?.focus();
 				break;
 		}
 	};
-
-	/**
-	 * Checks if dropdown would go off-screen and sets an
-	 * appropriate class to position it.
-	 */
-	useEffect(() => {
-		if (!appState.dropdown_open.value) {
-			return;
-		}
-
-		if (!ref?.current?.getBoundingClientRect) {
-			return;
-		}
-		const ourPosition = ref.current?.getBoundingClientRect();
-		const buttonPosition =
-			ref.current?.parentElement?.getBoundingClientRect();
-
-		if (!ourPosition || !buttonPosition) {
-			return;
-		}
-
-		const clientWidth =
-			window.innerWidth || document.documentElement.clientWidth;
-
-		const buttonCenterOffset =
-			buttonPosition.left - (clientWidth - buttonPosition.right);
-
-		// If the button is near enough to center, center dropdown
-		if (buttonCenterOffset <= 3 && buttonCenterOffset >= -3) {
-			setPositionClass('align-center');
-			return;
-		}
-
-		// Otherwise, try to prevent dropdown from going off-screen
-		if (ourPosition.right > clientWidth) {
-			setPositionClass('align-right');
-		} else if (ourPosition.left < 0) {
-			setPositionClass('align-left');
-		}
-	}, [appState.dropdown_open.value]);
-
-	/**
-	 * Set station focus when dropdown opens
-	 */
-	useEffect(() => {
-		if (props.focusFirstStation) {
-			setFocusStation(0);
-		}
-	}, [props.focusFirstStation]);
 
 	/**
 	 * Output array of Station components ordered by
@@ -146,27 +121,28 @@ export default forwardRef(function DropdownContainer(props, ref) {
 				return 0;
 			})
 			.map((station, index) => (
-				<Station {...station} focus={index === focusStation} />
+				<Station
+					{...station}
+					focus={
+						appState.dropdown_focus_station.value === index
+							? true
+							: null
+					}
+				/>
 			));
-	}, [stations]);
+	}, [stations, appState.dropdown_focus_station.value]);
 
 	return (
 		<div
 			ref={ref}
 			id={props.id}
-			class={`
-				dropdown-container
-				${positionClass}
-				${appState.dropdown_open.value ? 'open' : 'closed'}
-			`}
+			class={classname}
 			role="menu"
 			aria-labelledby={props.handleId}
 			onKeyUp={handleKeyUp}
 		>
 			<div>
-				<div class="dropdown-inner">
-					{appState.dropdown_open.value && stationsOutput}
-				</div>
+				<div class="dropdown-inner">{stationsOutput}</div>
 			</div>
 		</div>
 	);

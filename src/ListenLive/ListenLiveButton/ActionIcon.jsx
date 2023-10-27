@@ -1,19 +1,23 @@
 import { h } from 'preact';
-import { AppContext } from '@/signals';
-import { FaPlay as IconPlay, FaPause as IconPause } from 'react-icons/fa6';
+import { useMemo } from 'preact/hooks';
+import { useSelector } from 'react-redux';
+import { playerStateSelects } from 'Store/playerStateSlice';
+
+import { IconPlay, IconPause } from '@/ListenLive/Icons';
 
 import useLogRender from 'Utils/useLogRender';
-import { useContext } from 'react';
 
 export default function ActionIcon(props) {
-	const appState = useContext(AppContext);
 	useLogRender('ActionIcon');
+	const playing = useSelector(playerStateSelects.playing);
+
+	const icon = useMemo(() => {
+		return playing ? <IconPause /> : <IconPlay />;
+	}, [playing]);
+
 	return (
 		<div class="play-icon-container">
-			<div class="play-icon">
-				{appState.sdk.ready.value &&
-					(props.playing ? <IconPause /> : <IconPlay />)}
-			</div>
+			<div class="play-icon">{icon}</div>
 		</div>
 	);
 }
