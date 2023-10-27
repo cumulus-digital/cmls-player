@@ -12,6 +12,7 @@ export const appSignals = {
 	highlight_color: signal('#000'),
 	text_color: signal('#fff'),
 
+	offline_label: signal('Listen Live!'),
 	button_label: signal('Listen Live!'),
 	show_cue_label: signal(true),
 	cue_label: signal(''),
