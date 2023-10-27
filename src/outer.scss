@@ -9,6 +9,9 @@ cmls-player {
 	> * {
 		display: none !important;
 	}
+	cmls-player-component {
+		display: inherit !important;
+	}
 }
 .cmls-player-mediaplayer {
 	&,
