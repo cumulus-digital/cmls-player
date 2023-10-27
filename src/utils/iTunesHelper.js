@@ -1,10 +1,12 @@
-import fetchJsonp from 'fetch-jsonp';
 import store from 'Store';
 
 import Logger from 'Utils/Logger';
 const log = new Logger('iTunes Helper');
 
 const SEARCH_API_URL = 'https://itunes.apple.com/search';
+
+let last_minute = 0.0;
+let requests_per_minute = 0;
 
 /**
  * Fetch artwork from iTunes
@@ -81,8 +83,24 @@ const sanitizeTerm = (term) => {
 	return term;
 };
 
+const artCache = new Map();
+
 export const searchItunes = (term) => {
 	const { playerState } = store.getState();
+
+	const now = new Date();
+	const hour = now.getHours();
+	const minutes = now.getMinutes();
+	const timestamp = parseFloat(`${hour}.${minutes}`);
+
+	if (timestamp !== last_minute) {
+		last_minute = timestamp;
+		requests_per_minute = 0;
+	} else if (requests_per_minute > 15) {
+		return false;
+	} else {
+		requests_per_minute++;
+	}
 
 	term = sanitizeTerm(term);
 
@@ -92,7 +110,7 @@ export const searchItunes = (term) => {
 		country: playerState.country || 'us',
 		//media: 'music', // Causes iOS requests to redirect to musics:// urls?!
 		entity: 'song',
-		//attribute: 'songTerm',
+		attribute: 'mixTerm',
 		limit: 1,
 		lang: playerState.lang || 'en_us',
 		explicit: playerState.allow_explicit_covers || 'No',
@@ -104,8 +122,20 @@ export const searchItunes = (term) => {
 	const controller = new AbortController();
 	let abort = setTimeout(() => controller.abort(), 3000);
 
-	log.debug('Making iTunes search request', search);
 	return new Promise((resolve, reject) => {
+		if (artCache.has(search.toString())) {
+			log.debug('Loading art from local cache');
+			return resolve(artCache.get(search.toString())?.data);
+		}
+		if (artCache.size > 10) {
+			log.debug('Deleting oldest 5 items from art cache');
+			artCache
+				.keys()
+				.sort((k1, k2) => (k1.timestamp > k2.timestamp ? 1 : -1))
+				.slice(5)
+				.forEach((k) => artCache.delete(k));
+		}
+		log.debug('Making iTunes search request', { ...search });
 		fetch(url.toString(), {
 			headers: {
 				'Content-Type': 'application/json',
@@ -115,6 +145,10 @@ export const searchItunes = (term) => {
 			.then((response) => response.json())
 			.then((data) => {
 				if (data?.results?.length) {
+					artCache.set(search.toString(), {
+						data,
+						timestamp: Date.now(),
+					});
 					return resolve(data);
 				}
 				return reject('No data returned');
