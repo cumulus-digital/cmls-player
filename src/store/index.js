@@ -5,7 +5,7 @@ import {
 	initStateWithPrevTab,
 	withReduxStateSync,
 } from 'redux-state-sync';
-import { isEqual } from 'lodash';
+import isEqual from 'Utils/isEqual';
 
 import config from 'Config';
 
