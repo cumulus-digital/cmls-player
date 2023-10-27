@@ -1,7 +1,13 @@
+/**
+ * @param {string} value
+ */
 export default (value) => {
-	let res = 0;
-	for (let i = 0; i < value.length; i++) {
-		res += value.charCodeAt(i);
+	const str = new String(value);
+	let hash = 0;
+	for (let i = 0, len = str.length; i < len; i++) {
+		let chr = str.charCodeAt(i);
+		hash = (hash << 5) - hash + chr;
+		hash |= 0; // Convert to 32bit integer
 	}
-	return res % 16;
+	return hash;
 };
