@@ -114,6 +114,7 @@ export default class Logger {
 	}
 
 	handleMessage(type, ...request) {
+		if (!window.location.search.includes('debug')) return;
 		let { message, headerLength } = this.resolveMessage(request);
 		this.logMessage(type, message, headerLength);
 	}
