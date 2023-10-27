@@ -23,6 +23,7 @@ import { batch } from 'react-redux';
 import { appSignals } from '@/signals';
 import { CuePoint } from 'Store/CuePoint';
 import { setCuePoint } from './CuePointHandler';
+import { observeStore } from 'Store/index';
 
 export class TritonSDK {
 	static player;
@@ -49,27 +50,28 @@ export class TritonSDK {
 		document.head.appendChild(this.scriptTag);
 
 		// Handle state changes and cross-window stops
-		store.subscribe(() => {
-			const { playerState } = store.getState();
+		const handleStateChange = ({ status, playing }) => {
+			if (!this.player) return;
 
-			if (!this.player) {
-				return;
+			// Handle LIVE_PAUSE
+			if (this.isPlayingHere() && status === stream_status.LIVE_PAUSE) {
+				return this.stop();
 			}
 
-			if (this.previousStation !== playerState.playing) {
-				this.previousStation = playerState.playing;
+			// Handle remote stop requests
+			if (playing !== this.previousStation) {
+				this.previousStation = playing;
 
-				if (!playerState.playing && this.isPlayingHere()) {
+				if (!playing && this.isPlayingHere()) {
 					this.onStopMessage();
 				}
 			}
-
-			if (
-				this.isPlayingHere() &&
-				playerState.status === stream_status.LIVE_PAUSE
-			) {
-				this.stop();
-			}
+		};
+		new observeStore(store, handleStateChange.bind(this), (state) => {
+			return {
+				status: playerStateSelects.status(state),
+				playing: playerStateSelects.playing(state),
+			};
 		});
 
 		if (isParentWindow()) {
@@ -141,8 +143,8 @@ export class TritonSDK {
 		}
 
 		if (playerState.playing) {
-			this.stop();
 			batch(() => {
+				this.stop();
 				store.dispatch(
 					playerStateActions['set/status'](
 						stream_status.LIVE_CONNECTING
@@ -152,12 +154,13 @@ export class TritonSDK {
 			});
 			setTimeout(() => {
 				this.onPlayMessage.call(this, mount);
-			}, 250);
+			}, 300);
 			return;
 		}
 
 		log.debug('Play station!', { playerState });
 		batch(() => {
+			setCuePoint(mount, {});
 			store.dispatch(playerStateActions['set/playing'](mount));
 			store.dispatch(playerStateActions['set/station/active'](mount));
 			store.dispatch(playerStateActions['set/interactive'](false));
@@ -218,12 +221,12 @@ export class TritonSDK {
 					playerStateActions['set/status'](stream_status.LIVE_STOP)
 				);
 			}
+			if (this.isPlayingHere()) {
+				this.player.stop();
+				this.playingHere = false;
+				forceNowPlayingTick.call(this);
+			}
 		});
-		if (this.isPlayingHere()) {
-			this.player.stop();
-			this.playingHere = false;
-			forceNowPlayingTick.call(this);
-		}
 	}
 
 	static stop() {
@@ -261,7 +264,7 @@ export class TritonSDK {
 			current_station
 		);
 
-		let newButtonLabel = 'Listen Live!';
+		let newButtonLabel = appSignals.offline_label.value;
 		let newCueLabel = current_station?.fetch_nowplaying ? cueLabel : '';
 		switch (status) {
 			case stream_status.LIVE_PREROLL:
