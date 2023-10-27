@@ -566,7 +566,7 @@ button {
 		top: 0;
 		background-color: var(--highlight_color);
 		opacity: 0;
-		transition: opacity 0.15s;
+		//transition: opacity 0.1s;
 	}
 
 	@include hover {
@@ -593,7 +593,7 @@ button {
 		position: relative;
 		top: 0.1em; //calc(var(--fontSize) * 0.1);
 		opacity: 1;
-		transition: opacity 0.2s;
+		transition: opacity 0.15s;
 
 		.overlay {
 			display: block;
@@ -607,7 +607,7 @@ button {
 			filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.3))
 				drop-shadow(2px 2px 1px rgba(0, 0, 0, 0.3))
 				drop-shadow(0 0 1em #000);
-			transition: opacity 0.15s;
+			transition: opacity 0.25s;
 		}
 	}
 
@@ -687,7 +687,7 @@ button {
 	position: relative;
 	overflow: hidden;
 
-	span {
+	& > span {
 		display: flex;
 		flex: 0 0 auto;
 		flex-direction: row;
@@ -695,13 +695,13 @@ button {
 		will-change: transform;
 	}
 
-	&.scroll span {
+	&.scroll > span {
 		animation: var(--speed, 10s) infinite linear scrollLabel;
-		--distance: calc(-100% - 1.5em);
+		--distance: calc(-100% - var(--spacing, 1.3em));
 
 		&::after {
 			content: attr(data-label);
-			padding-left: 1.5em;
+			padding-left: var(--spacing, 1.3em);
 			position: absolute;
 			left: 100%;
 			white-space: nowrap;
@@ -713,6 +713,70 @@ button {
 			}
 			to {
 				transform: translate3d(var(--distance), 0, 0);
+			}
+		}
+	}
+}
+
+.shuffle-label {
+	display: flex;
+	flex-direction: column;
+	position: relative;
+	width: 100%;
+	overflow: hidden;
+
+	> div {
+		display: flex;
+		flex: 0 0 auto;
+		flex-direction: column;
+		transform: translate3d(0, 0, 0);
+		will-change: transform;
+
+		& > * {
+			display: flex;
+			align-items: center;
+			position: absolute;
+			height: 100%;
+			top: 100%;
+
+			.stopped &:nth-child(2) {
+				font-size: 0.8em;
+				text-transform: none;
+				vertical-align: bottom;
+			}
+		}
+		& > *:first-child {
+			position: relative;
+			top: auto;
+		}
+	}
+
+	&.shuffle > div {
+		animation: 20s infinite linear shuffleLabel;
+
+		&::after {
+			content: attr(data-label);
+			position: absolute;
+			top: 200%;
+		}
+		@keyframes shuffleLabel {
+			0% {
+				transform: translate3d(0, 0, 0);
+			}
+			50% {
+				transform: translate3d(0, 0, 0);
+			}
+			52% {
+				transform: translate3d(0, -100%, 0);
+			}
+			95% {
+				transform: translate3d(0, -100%, 0);
+			}
+			97% {
+				transform: translate3d(0, -200%, 0);
+			}
+			100% {
+				transform: translate3d(0, -200%, 0);
 			}
 		}
 	}

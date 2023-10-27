@@ -3,17 +3,26 @@ import { useContext, useMemo } from 'preact/hooks';
 
 import ScrollLabel from 'Generics/ScrollLabel';
 import { playerStateSelects } from 'Store/playerStateSlice';
-import { useSelector } from 'react-redux';
+import { shallowEqual, useSelector } from 'react-redux';
 import { stream_status } from 'Consts';
 
 import { AppContext } from '@/signals';
 import useLogRender from 'Utils/useLogRender';
 import { useComputed, useSignal } from '@preact/signals';
+import ShuffleLabel from 'Generics/ShuffleLabel';
 
 export default function LabelArea() {
 	useLogRender('LabelArea');
 	const appState = useContext(AppContext);
 	const status = useSelector(playerStateSelects.status);
+	const current_station = useSelector(
+		playerStateSelects['station/current'],
+		shallowEqual
+	);
+	const buttonLabel = useMemo(
+		() => [appState.button_label, current_station?.name],
+		[appState.button_label.value, current_station]
+	);
 
 	const classnames = useMemo(() => {
 		const list = ['label-area'];
@@ -45,11 +54,11 @@ export default function LabelArea() {
 	return (
 		<div class={classnames}>
 			{showNowPlaying}
-			<ScrollLabel
+			<ShuffleLabel
 				tagName="h1"
 				speedModifier="3"
 				class="state"
-				label={appState.button_label}
+				labels={buttonLabel}
 			/>
 			{appState.cue_label.value?.length ? (
 				<ScrollLabel class="cue" label={appState.cue_label} />

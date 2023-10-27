@@ -1,5 +1,6 @@
 import { h, Fragment } from 'preact';
 import { useRef } from 'preact/hooks';
+import { Signal } from '@preact/signals';
 
 import useMarquee from 'Utils/useMarquee';
 
@@ -23,9 +24,12 @@ export default function ScrollLabel(props) {
 					ref={ref}
 					style={`
 						--speed: ${
-							(props.label?.value?.length || props.label.length) /
+							(props.label instanceof Signal
+								? props.label.value.length
+								: props.label.length) /
 							(props.speedModifier || 4.5)
 						}s;
+						${props.spacing ? '--spacing: ' + props.spacing + ';' : null}
 					`}
 				>
 					<span data-label={props.label}>{props.label}</span>
