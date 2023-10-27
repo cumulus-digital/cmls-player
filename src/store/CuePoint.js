@@ -5,20 +5,59 @@ export class CuePoint {
 	title = '';
 	track_id;
 	artwork;
-	type;
+
+	static types = {
+		TRACK: 'track',
+		OFFLINE_TRACK: 'offline-track',
+		AD: 'ad',
+		VANITY: 'vanity',
+	};
+
+	type = CuePoint.types.VANITY;
 
 	constructor(conf) {
-		if (conf) {
-			for (let k in conf) {
-				this[k] = conf[k];
-			}
-		}
+		this.artist = conf?.artist || '';
+		this.title = conf?.title || '';
+		this.artwork = conf?.artwork || undefined;
+		this.type = conf?.type || undefined;
 
-		if (!this.track_id) {
-			const label = [this.artist, this.title].filter((k) =>
-				k.trim ? k.trim() : ''
-			);
-			this.track_id = generateIdFromString(label);
+		this.track_id =
+			conf?.track_id ||
+			CuePoint.generateTrackId(conf?.artist, conf?.title);
+	}
+
+	/**
+	 * @param {string} newType
+	 */
+	set type(newType) {
+		if (!newType || !Object.values(CuePoint.types).includes(newType)) {
+			console.warn('Cuepoint constructed with an invalid type', conf[k]);
+			this.type = CuePoint.types.VANITY;
+		} else {
+			this.type = newType;
 		}
+	}
+
+	get track_id() {
+		if (!this.track_id) {
+			this.track_id = CuePoint.generateTrackId(this.artist, this.title);
+		}
+		return this.track_id;
+	}
+
+	set track_id(newId) {
+		this.track_id = newId;
+	}
+
+	/**
+	 * Generate a new track ID from the artist and title
+	 * @returns {string}
+	 */
+	static generateTrackId(artist = this.artist, title = this.title) {
+		const label = [artist, title]
+			.filter((k) => (k?.trim ? k.trim() : ''))
+			.join(' – ');
+		const track_id = label ? generateIdFromString(label) : Date.now();
+		return track_id;
 	}
 }

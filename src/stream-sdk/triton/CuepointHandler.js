@@ -1,4 +1,5 @@
 import store from 'Store';
+import { CuePoint } from 'Store/CuePoint';
 import { playerStateActions } from 'Store/playerStateSlice';
 
 import Logger from 'Utils/Logger';
@@ -153,9 +154,10 @@ export function onAdBreakCuePointStart(e) {
 	log.debug('Ad break start', { event: e, playerState });
 
 	setCuePoint(playerState.playing, {
-		artistName: station?.tagline || '',
+		artistName: station?.name || 'Ad Break',
 		cueTitle: "We'll return after these messages",
-		type: 'ad',
+		trackID: Date.now(),
+		type: CuePoint.types.AD,
 	});
 }
 
@@ -164,10 +166,13 @@ export function onAdBreakCuePointComplete(e) {
 
 	const station = playerState.stations[playerState.playing];
 	if (!station) {
-		log.warn('Received an ad break cue point without a playing station!', {
-			event: e,
-			playerState,
-		});
+		log.warn(
+			'Received an ad break end cue point without a playing station!',
+			{
+				event: e,
+				playerState,
+			}
+		);
 		return;
 	}
 
@@ -175,79 +180,74 @@ export function onAdBreakCuePointComplete(e) {
 	setCuePoint(playerState.playing);
 }
 
-export function setCuePoint(mount, cuePoint = {}) {
-	const { playerState } = store.getState();
+export function setCuePoint(mount, newCue = {}) {
+	try {
+		const { playerState } = store.getState();
 
-	if (!mount || !playerState.stations[mount]) {
-		log.warn('Attempted to set a cue point without a registered mount.', {
-			mount,
-			cuePoint,
-			playerState,
-		});
+		if (!mount || !playerState.stations[mount]) {
+			log.warn(
+				'Attempted to set a cue point without a registered mount.',
+				{
+					mount,
+					cuePoint,
+					playerState,
+				}
+			);
 
-		return;
-	}
+			return;
+		}
 
-	const station = playerState.stations[mount];
-	const cuepoint = playerState.cuepoints[mount];
+		const station = playerState.stations[mount];
+		const oldCue = playerState.cuepoints?.[mount];
 
-	let cueData = {
-		artist: cuePoint.artistName || station.name || '',
-		title: cuePoint.cueTitle || station.tagline || '',
-		track_id: cuePoint.trackID || '',
-		type: cuePoint.type || '',
-	};
+		let cueData = {};
 
-	/*
-	if (!cuePoint) {
-		cueData = {
-			...cueData,
-			artist: station.name || '',
-			title: station.tagline || '',
-		};
-	} else {
-		cueData = {
-			...cueData,
-			artist: cuePoint.artistName || '',
-			title: cuePoint.cueTitle || '',
-			track_id: cuePoint.trackID || '',
-			type: cuePoint.type || '',
-		};
-	}
-	*/
+		if (!newCue || !Object.values(newCue).length) {
+			// Setting vanity cue
+			Object.assign(cueData, {
+				artist: station?.name || '',
+				title: station?.tagline || '',
+				type: CuePoint.types.VANITY,
+			});
+		} else {
+			Object.assign(cueData, {
+				artist: newCue?.artistName || station?.name || '',
+				title: newCue?.cueTitle || station?.name || '',
+				type: newCue?.type,
+				track_id: newCue?.trackID,
+			});
+		}
 
-	// If we're playing but no artist or title is set, use our tagline
-	if (playerState.playing && !(cueData.artist && cueData.title)) {
-		cueData = {
-			artist: station.tagline || '',
-			title: '',
-			type: 'tagline',
-		};
-	}
+		// If we're playing but no artist and title is set, use our tagline
+		if (playerState.playing && !(cueData.artist && cueData.title)) {
+			cueData = {
+				artist: station?.tagline || '',
+				title: station?.name || '',
+				type: CuePoint.types.VANITY,
+			};
+		}
 
-	// If no track id is provided, generate one from artist+title
-	if (!cueData.track_id) {
-		cueData.track_id = generateIdFromString(
-			[cueData.artist, cueData.title]
-				.filter((k) => (k.trim ? k.trim() : ''))
-				.join(' – ')
-		);
-	}
+		cueData = new CuePoint(cueData);
 
-	if (cueData.track_id !== cuepoint?.track_id) {
-		log.debug('Setting cue point', {
-			mount,
-			received: cuePoint,
-			using: cueData,
-		});
+		if (cueData.track_id !== oldCue?.track_id) {
+			log.debug('Setting cue point', {
+				mount,
+				received: newCue,
+				using: cueData,
+			});
 
-		store.dispatch(
-			playerStateActions['set/station/cuepoint']({ [mount]: cueData })
-		);
-	}
+			store.dispatch(
+				playerStateActions['set/station/cuepoint']({
+					[mount]: Object.assign({}, cueData),
+				})
+			);
+		}
 
-	if (cueData.type === 'track') {
-		// fetch artwork for track types
-		fetchArtwork(mount, cueData);
+		if (cueData.type === 'track') {
+			// fetch artwork for track types
+			fetchArtwork(mount, cueData);
+		}
+	} catch (e) {
+		console.error(e);
 	}
 }

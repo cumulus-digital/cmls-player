@@ -85,7 +85,7 @@ if ('mediaSession' in navigator) {
 					const stationMeta = {
 						title: station?.name,
 						artist:
-							cuepoint.type === 'ad'
+							cuepoint?.type === 'ad'
 								? "We'll return after these messages"
 								: station?.tagline,
 					};
@@ -108,14 +108,14 @@ if ('mediaSession' in navigator) {
 				// If we're in a commercial break, set station data
 
 				const metadata = {
-					title: cuepoint.title || station.name,
-					artist: cuepoint.artist || station.tagline,
+					title: cuepoint?.title || station?.name,
+					artist: cuepoint?.artist || station?.tagline,
 				};
 
 				// If there's no cuepoint artwork, try to use the station logo
-				if (!cuepoint.artwork && station?.logo) {
+				if (!cuepoint?.artwork && station?.logo) {
 					metadata.artwork = [{ src: station.logo }];
-				} else if (cuepoint.artwork) {
+				} else if (cuepoint?.artwork) {
 					metadata.artwork = [{ src: cuepoint.artwork }];
 				}
 

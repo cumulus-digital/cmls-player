@@ -11,6 +11,7 @@ import { Station } from './Station';
 import { CuePoint } from './CuePoint';
 
 import { stream_status } from 'Consts';
+import { appSignals } from '@/signals';
 
 const playerStateSlice = createSlice({
 	name: 'playerState',
@@ -118,12 +119,17 @@ const playerStateSlice = createSlice({
 					return;
 				}
 
-				const cuePoint = Object.assign(
-					{},
-					new CuePoint(payload[mount])
-				);
-				state.cuepoints[mount] = cuePoint;
-				if (cuePoint?.type.includes('track')) {
+				const oldCue = state.cuepoints?.[mount] || {};
+				const newCue = Object.assign({}, new CuePoint(payload[mount]));
+				let resolvedCue;
+				if (newCue?.track_id === oldCue?.track_id) {
+					resolvedCue = Object.assign(oldCue, newCue);
+				} else {
+					resolvedCue = newCue;
+				}
+				console.log('resolved cue', resolvedCue);
+				state.cuepoints[mount] = resolvedCue;
+				if (resolvedCue?.type.includes('track')) {
 					state.stations[mount].last_cuepoint = Date.now();
 				}
 			}
@@ -150,11 +156,16 @@ const playerStateSlice = createSlice({
 					);
 					return;
 				}
+				if (!state.cuepoints?.[mount]) {
+					console.error(
+						'Attempted to set artwork for a cue point that does not exist',
+						{ mount, payload }
+					);
+					return;
+				}
 
-				if (state.cuepoints[mount]) {
-					Object.assign(state.cuepoints[mount], {
-						artwork: payload[mount],
-					});
+				if (state.cuepoints?.[mount]?.artwork !== payload[mount]) {
+					state.cuepoints[mount].artwork = payload[mount];
 				}
 			}
 		},
@@ -303,7 +314,7 @@ export const playerStateSelects = new (class Selectors {
 			(state, station) => this['station/cuelabel'](state, station),
 		],
 		(status, station, cuelabel) => {
-			let newButtonLabel = 'Listen Live!';
+			let newButtonLabel = appSignals.offline_label.value;
 			let newCueLabel = station?.fetch_nowplaying ? cuelabel : '';
 			switch (status) {
 				case stream_status.LIVE_PREROLL:
