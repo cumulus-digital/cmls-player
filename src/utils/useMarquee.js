@@ -1,3 +1,4 @@
+import { Signal, useComputed, useSignal } from '@preact/signals';
 import { useState, useEffect } from 'preact/hooks';
 
 /**
@@ -6,34 +7,46 @@ import { useState, useEffect } from 'preact/hooks';
  * child to calculate boundary clipping.
  *
  * @param {object} ref ref object for the element
- * @returns {boolean} State
+ * @returns {Signal} Read value to determine if the element should scroll
  */
 const useMarquee = (ref) => {
-	const [shouldScroll, setShouldScroll] = useState(false);
-
-	const testSize = () => {
-		if (!ref?.current?.firstChild?.offsetWidth) {
-			return;
+	//const [shouldScroll, setShouldScroll] = useState(false);
+	//const shouldScroll = useSignal(false);
+	const childWidth = useSignal();
+	const parentWidth = useSignal();
+	const shouldScroll = useComputed(() => {
+		if (childWidth.value > parentWidth.value) {
+			return true;
 		}
+		return false;
+	});
 
-		const overflowX =
-			ref.current.firstChild.offsetWidth > ref.current.offsetWidth;
-		if (overflowX) {
-			setShouldScroll(true);
-		} else {
-			setShouldScroll(false);
-		}
+	const genObserver = (el, val) => {
+		const observer = new ResizeObserver((entries) => {
+			let width;
+			for (const entry of entries) {
+				if (entry.contentBoxSize) {
+					const contentBoxSize = entry.contentBoxSize[0];
+					width = contentBoxSize.inlineSize;
+				} else {
+					width = entry.contentRect.width;
+				}
+			}
+			val.value = width;
+		});
+		observer.observe(el);
+		return observer;
 	};
 
-	let testInterval;
 	useEffect(() => {
-		testInterval = setInterval(() => testSize(), 250);
+		const parentObserver = genObserver(ref.current, parentWidth);
+		const childObserver = genObserver(ref.current.firstChild, childWidth);
 
 		return () => {
-			clearInterval(testInterval);
-			testInterval = null;
+			parentObserver.disconnect();
+			childObserver.disconnect();
 		};
-	}, []);
+	}, [ref]);
 
 	return shouldScroll;
 };

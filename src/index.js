@@ -188,8 +188,6 @@ window.customElements.define(
 					!path.includes(this) &&
 					!(SDK?.mediaPlayer?.el && path.includes(SDK.mediaPlayer.el))
 				) {
-					console.log('path', path, SDK?.mediaPlayer?.el);
-					//store.dispatch(playerStateActions['set/dropdown_open'](false));
 					appSignals.dropdown_open.value = false;
 				}
 			};

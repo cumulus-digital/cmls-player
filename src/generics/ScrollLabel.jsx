@@ -19,7 +19,7 @@ export default function ScrollLabel(props) {
 			{props.label && (
 				<Tag
 					class={`${props.class || ''} scroll-label ${
-						shouldScroll ? 'scroll' : ''
+						shouldScroll.value ? 'scroll' : ''
 					}`}
 					ref={ref}
 					style={`

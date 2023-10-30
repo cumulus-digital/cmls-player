@@ -127,7 +127,7 @@ const playerStateSlice = createSlice({
 				} else {
 					resolvedCue = newCue;
 				}
-				console.log('resolved cue', resolvedCue);
+				//console.log('resolved cue', resolvedCue);
 				state.cuepoints[mount] = resolvedCue;
 				if (resolvedCue?.type.includes('track')) {
 					state.stations[mount].last_cuepoint = Date.now();

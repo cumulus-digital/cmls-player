@@ -160,62 +160,20 @@ button {
 			opacity: 0.2;
 		}
 	}
-
-	/*
-	& > .artwork {
-		position: absolute;
-		top: 50%;
-		left: 5px;
-		transform: translateY(-50%);
-		width: auto;
-		height: 85%;
-		z-index: 2;
-		border-right: 1px solid rgba(0, 0, 0, 0.3);
-		opacity: 1;
-
-		transition: all 0.25s;
-
-		+ .play-icon-container {
-			flex-basis: calc(var(--button_height) - 10px);
-			width: calc(var(--button_height) - 10px);
-			height: calc(var(--button_height) - 10px);
-
-			&::after {
-				--toSize: 300%;
-			}
-
-			svg {
-				opacity: 0;
-				transition: opacity 0.25s;
-			}
-		}
-	}
-	@include hover {
-		& > .artwork {
-			opacity: 0.6;
-		}
-		& > .play-icon-container {
-			z-index: 2;
-			svg {
-				opacity: 1;
-			}
-		}
-	}
-	*/
 }
 
 .live-artwork {
 	position: absolute;
 	top: 50%;
 	left: 4px;
-	transform: translateY(-50%);
+	transform: translate3d(0, -50%, 0);
 	width: auto;
 	height: calc(var(--button_height) - 10px);
 	z-index: 2;
 	opacity: 1;
 
 	border-radius: 3px;
-	box-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
+	box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
 
 	transition: all 0.25s;
 	transform-origin: center center;
@@ -233,12 +191,12 @@ button {
 	@at-root .listen-live-button {
 		@include hover {
 			.live-artwork {
-				top: 110%;
-				box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-				//z-index: 1;
+				transform: translate3d(0, -50%, 0) scale3d(0.85, 0.85, 0.85);
+				//box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+				z-index: 1;
 
 				~ .play-icon-container {
-					//z-index: 2;
+					z-index: 2;
 
 					&::after {
 						--toSize: 220%;
@@ -267,11 +225,11 @@ button {
 	z-index: 1;
 
 	.playing &::before {
-		--waveLeft: 0%;
+		--waveLeft: 20%;
 		--waveTop: 10%;
 		--fromOpacity: 0;
 		--toOpacity: 0.7;
-		--toSize: 780%;
+		--toSize: 800%;
 		--waveSpeed: 4s;
 		@extend .extendWave;
 		z-index: -1;
@@ -289,7 +247,7 @@ button {
 		filter: drop-shadow(0 0 10px #0008);
 
 		svg {
-			filter: drop-shadow(1px 1px 0 #0003);
+			filter: drop-shadow(1px 1px 0 #0006);
 		}
 
 		.playing &,
@@ -338,9 +296,10 @@ button {
 	.playing & {
 		//&::before,
 		&::after {
-			--waveDelay: 0.3s;
-			--waveSpeed: 1.7s;
-			--toSize: 220%;
+			--waveDelay: 0.5s;
+			--waveSpeed: 1.8s;
+			--toOpacity: 0.8;
+			--toSize: 270%;
 			@extend .extendWave;
 			z-index: -1;
 		}
@@ -368,7 +327,7 @@ button {
 	z-index: 3;
 
 	line-height: 1.15;
-	text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.1);
+	text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.4);
 
 	.scroll {
 		mask-image: linear-gradient(
@@ -393,7 +352,7 @@ button {
 		font-size: 1.95em; //calc(var(--fontSize) * 1.69);
 		font-stretch: 87.5%;
 		font-weight: 700;
-		text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.3);
+		//text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.3);
 
 		.stopped & {
 			line-height: 1;
@@ -472,7 +431,7 @@ button {
 .dropdown-container {
 	display: flex;
 	position: absolute;
-	top: calc(var(--button_top) + var(--button_height) - 2px);
+	top: calc(var(--button_top) + var(--button_height) - 1px);
 	left: var(--button_left);
 	z-index: 2147483640;
 
@@ -513,7 +472,18 @@ button {
 		color-mix(in srgb, var(--highlight_color) 30%, transparent) 100%
 	);
 
-	box-shadow: 5px 5px rgba(0, 0, 0, 0.15);
+	&::after {
+		content: "";
+		background: rgba(0, 0, 0, 0.06);
+		width: calc(var(--button_width));
+		height: 5px;
+		position: absolute;
+		top: 0;
+		left: 0;
+		pointer-events: none;
+		z-index: 1;
+	}
+
 	width: 350px;
 	max-width: 100%;
 	max-height: 0;
@@ -582,6 +552,10 @@ button {
 		h2 {
 			text-decoration: underline;
 		}
+	}
+
+	h2 {
+		text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.4);
 	}
 
 	.logo {
@@ -797,16 +771,16 @@ button {
 	left: var(--waveLeft, 45%);
 	top: var(--waveTop, 50%);
 	filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.5));
-	transform: translate3d(-50%, -50%, 0);
+	transform: translate3d(-50%, -50%, 0) scale3d(0, 0, 0);
 
-	animation: var(--waveSpeed, 1s) linear var(--waveDela, 0s) infinite
+	animation: var(--waveSpeed, 1s) linear var(--waveDelay, 0s) infinite
 		extendWave;
 
 	will-change: scale, opacity;
 
 	@keyframes extendWave {
 		0% {
-			transform: translate3d(-50%, -50%, 0) scale(0);
+			transform: translate3d(-50%, -50%, 0) scale3d(0, 0, 0);
 			//width: 0;
 			//height: 0;
 			opacity: var(--fromOpacity, 0);
@@ -815,7 +789,7 @@ button {
 			opacity: var(--toOpacity, 0.5);
 		}
 		100% {
-			transform: translate3d(-50%, -50%, 0) scale(1);
+			transform: translate3d(-50%, -50%, 0) scale3d(1, 1, 1);
 			//width: var(--toSize, 200%);
 			//height: var(--toSize, 200%);
 			opacity: var(--endOpacity, 0);
