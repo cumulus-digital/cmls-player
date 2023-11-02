@@ -24,6 +24,7 @@
     "@tabler/icons-react": "^2.39.0",
     "@wordpress/prettier-config": "^1.2.0",
     "babel-loader": "^8.2.5",
+    "broadcast-channel": "^6.0.0",
     "browserslist": "^4.20.3",
     "clean-webpack-plugin": "^4.0.0",
     "core-js": "^3.22.4",

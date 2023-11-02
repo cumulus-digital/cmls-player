@@ -18,7 +18,6 @@ import Dropdown from './Dropdown';
 import { stream_status } from 'Consts';
 import { AppContext } from '@/signals';
 import useLogRender from 'Utils/useLogRender';
-import { useComputed } from '@preact/signals';
 
 export default function ListenLive(props) {
 	const appState = useContext(AppContext);

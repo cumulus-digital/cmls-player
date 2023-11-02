@@ -1,4 +1,4 @@
-import { combineReducers, configureStore } from '@reduxjs/toolkit';
+import { Store, combineReducers, configureStore } from '@reduxjs/toolkit';
 import {
 	createStateSyncMiddleware,
 	initMessageListener,
@@ -20,7 +20,10 @@ const store = configureStore({
 	middleware: (getDefaultMiddleware) =>
 		getDefaultMiddleware().concat(
 			createStateSyncMiddleware({
-				channel: `CMLS_PLAYER_REDUX_V${config.STORE_VERSION}`,
+				channel: `CMLS_PLAYER_V${config.STORE_VERSION}`,
+				broadcastChannelOption: {
+					webWorkerSupport: false,
+				},
 			})
 		),
 });
@@ -35,14 +38,31 @@ export class observeStore {
 	#store;
 	#onChange;
 	#select;
+
+	/**
+	 * Unsubscribe the current observer
+	 */
 	unsubscribe;
 
+	/**
+	 *
+	 * @param {Store} store
+	 * @param {function} onChange
+	 * @param {function} select
+	 */
 	constructor(store, onChange = () => {}, select = (state) => state) {
 		this.#store = store;
 		this.#onChange = onChange;
 		this.#select = select;
-		this.unsubscribe = this.#store.subscribe(this.#handleChange.bind(this));
+		this.subscribe();
 		this.#handleChange();
+	}
+
+	subscribe() {
+		if (this.unsubscribe) {
+			this.unsubscribe();
+		}
+		this.unsubscribe = this.#store.subscribe(this.#handleChange.bind(this));
 	}
 
 	#handleChange() {

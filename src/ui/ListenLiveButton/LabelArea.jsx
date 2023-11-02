@@ -1,15 +1,14 @@
 import { h } from 'preact';
 import { useContext, useMemo } from 'preact/hooks';
 
-import ScrollLabel from 'Generics/ScrollLabel';
+import ScrollLabel from '@/ui/Generics/ScrollLabel';
 import { playerStateSelects } from 'Store/playerStateSlice';
 import { shallowEqual, useSelector } from 'react-redux';
 import { stream_status } from 'Consts';
 
 import { AppContext } from '@/signals';
 import useLogRender from 'Utils/useLogRender';
-import { useComputed, useSignal } from '@preact/signals';
-import ShuffleLabel from 'Generics/ShuffleLabel';
+import ShuffleLabel from '@/ui/Generics/ShuffleLabel';
 
 export default function LabelArea() {
 	useLogRender('LabelArea');

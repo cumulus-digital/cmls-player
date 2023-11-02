@@ -12,6 +12,7 @@ import { CuePoint } from './CuePoint';
 
 import { stream_status } from 'Consts';
 import { appSignals } from '@/signals';
+import generateUuid from 'Utils/generateUuid';
 
 const playerStateSlice = createSlice({
 	name: 'playerState',
@@ -129,22 +130,35 @@ const playerStateSlice = createSlice({
 				}
 				//console.log('resolved cue', resolvedCue);
 				state.cuepoints[mount] = resolvedCue;
-				if (resolvedCue?.type.includes('track')) {
-					state.stations[mount].last_cuepoint = Date.now();
+				if (resolvedCue?.type?.includes('track')) {
+					state.stations[mount].last_track_cuepoint = Date.now();
 				}
 			}
 		},
-		'set/station/last_cuepoint': (state, { payload }) => {
+		'set/station/last_track_cuepoint': (state, { payload }) => {
 			for (let mount in payload) {
 				if (!state.stations?.[mount]) {
 					console.error(
-						'Attempted to set last cue point timestamp for an unregistered mount',
+						'Attempted to set last track cue point timestamp for an unregistered mount',
 						{ mount, payload }
 					);
 					return;
 				}
 
-				state.stations[mount].last_cuepoint = payload;
+				state.stations[mount].last_track_cuepoint = payload;
+			}
+		},
+		'set/station/last_unresolved_cuepoint': (state, { payload }) => {
+			for (let mount in payload) {
+				if (!state.stations?.[mount]) {
+					console.error(
+						'Attempted to set last unresolved cue point timestamp for an unregistered mount',
+						{ mount, payload }
+					);
+					return;
+				}
+
+				state.stations[mount].last_unresolved_cuepoint = payload;
 			}
 		},
 		'set/station/cuepoint/artwork': (state, { payload }) => {
@@ -209,6 +223,7 @@ const playerStateSlice = createSlice({
 			}
 			let count = state.stations[mount].unresolved_nowplaying_requests;
 			state.stations[mount].unresolved_nowplaying_requests = count + 1;
+			state.stations[mount].last_unresolved_cuepoint = Date.now();
 		},
 		'action/station/unresolved_nowplaying_requests/decrement': (
 			state,

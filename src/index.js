@@ -1,3 +1,5 @@
+import './utils/leaderElection.js';
+
 import { createContext, h } from 'preact';
 import { useLayoutEffect, useRef } from 'preact/hooks';
 import register from 'preact-custom-element';
@@ -18,8 +20,8 @@ import baseConfig from 'Config';
 import fixSassJson from 'Utils/fixSassJson';
 const config = fixSassJson(baseConfig);
 
-import { SDK } from './stream-sdk';
-import ListenLive from './ListenLive';
+import { SDK } from 'SDK';
+import ListenLive from 'UI';
 
 import(
 	/* webpackChunkName: 'outer' */
@@ -60,10 +62,11 @@ window.customElements.define(
 			this.appendChild(document.createElement('cmls-player-component'));
 		}
 
-		registerComponent() {
+		async registerComponent() {
 			if (this.configured) return;
 
 			this.configured = true;
+			this.observer.disconnect();
 
 			const dispatch = store.dispatch;
 
@@ -72,9 +75,28 @@ window.customElements.define(
 
 			log.debug('Parsing markup config', { props, children });
 
-			batch(() => {
-				appSignals.sdk.type.value = props?.sdk || 'triton';
+			// Signals are per-instance, but redux state is owned by the leader
+			appSignals.sdk.type.value = props?.sdk || 'triton';
 
+			if (props?.['offline-label'] !== undefined) {
+				appSignals.offline_label.value = props['offline-label'];
+			}
+
+			if (props?.['no-cue-label'] !== undefined) {
+				appSignals.show_cue_label.value = false;
+			}
+
+			if (props?.['background-color'] !== undefined) {
+				appSignals.background_color.value = props['background-color'];
+			}
+			if (props?.['highlight-color'] !== undefined) {
+				appSignals.highlight_color.value = props['highlight-color'];
+			}
+			if (props?.['text-color'] !== undefined) {
+				appSignals.text_color.value = props['text-color'];
+			}
+
+			batch(() => {
 				let minutes_between_preroll = config.minutes_between_preroll;
 				if (props?.['minutes-between-preroll'] !== undefined) {
 					minutes_between_preroll =
@@ -88,25 +110,6 @@ window.customElements.define(
 							: config.minutes_between_preroll
 					)
 				);
-
-				if (props?.['offline-label'] !== undefined) {
-					appSignals.offline_label.value = props['offline-label'];
-				}
-
-				if (props?.['no-cue-label'] !== undefined) {
-					appSignals.show_cue_label.value = false;
-				}
-
-				if (props?.['background-color'] !== undefined) {
-					appSignals.background_color.value =
-						props['background-color'];
-				}
-				if (props?.['highlight-color'] !== undefined) {
-					appSignals.highlight_color.value = props['highlight-color'];
-				}
-				if (props?.['text-color'] !== undefined) {
-					appSignals.text_color.value = props['text-color'];
-				}
 
 				let newStations = {};
 				let hasPrimary = null;
@@ -204,7 +207,7 @@ window.customElements.define(
 				}
 			});
 
-			SDK.init();
+			SDK.init(appSignals.sdk.type.peek());
 
 			register(CmlsPlayerProvider, 'cmls-player-component', [], {
 				shadow: true,

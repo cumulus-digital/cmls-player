@@ -1,12 +1,12 @@
 import { h, Fragment } from 'preact';
 import { useMemo, useRef } from 'preact/hooks';
-import { Signal, useComputed } from '@preact/signals';
+import { Signal } from '@preact/signals';
 
-import useMarquee from 'Utils/useMarquee';
 import ScrollLabel from './ScrollLabel';
 
 /**
- * @param {{labels: (array<string>|Signal)}} props
+ * @param {object} props
+ * @param {array<string>|Signal} props.labels
  */
 export default function ShuffleLabel(props) {
 	const ref = useRef(null);
@@ -23,7 +23,6 @@ export default function ShuffleLabel(props) {
 				resolved_labels.push(val);
 			}
 		});
-		console.log(resolved_labels);
 		return resolved_labels.map((l) => (
 			<ScrollLabel
 				label={l}

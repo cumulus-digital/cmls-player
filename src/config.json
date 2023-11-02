@@ -1,5 +1,5 @@
 {
-	"STORE_VERSION": 1.1,
+	"STORE_VERSION": 1.2,
 	"siteframe_id": "cmls_siteframe",
 	"sdk_id": "'cmls-player-sdk-connector'",
 	"mediaplayer_id_prefix": "cmlsmediaplayer",

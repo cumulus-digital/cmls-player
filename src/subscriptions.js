@@ -4,7 +4,7 @@
 import store, { observeStore } from './store';
 import { playerStateSelects } from 'Store/playerStateSlice';
 import { appSignals } from './signals';
-import { SDK } from './stream-sdk';
+import { SDK } from 'SDK';
 
 // Update button and cue labels
 const labelObserverEffect = () => {

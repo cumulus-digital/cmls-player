@@ -9,12 +9,21 @@ export class CuePoint {
 	static types = {
 		TRACK: 'track',
 		OFFLINE_TRACK: 'offline-track',
+		SPEECH: 'speech',
 		AD: 'ad',
 		VANITY: 'vanity',
 	};
 
 	type = CuePoint.types.VANITY;
 
+	/**
+	 *
+	 * @param {object} conf
+	 * @param {string?} conf.artist
+	 * @param {string?} conf.title
+	 * @param {string?} conf.artwork Artwork URL
+	 * @param {string?} conf.type
+	 */
 	constructor(conf) {
 		this.artist = conf?.artist || '';
 		this.title = conf?.title || '';
@@ -45,6 +54,9 @@ export class CuePoint {
 		return this.track_id;
 	}
 
+	/**
+	 * @param {string} newId
+	 */
 	set track_id(newId) {
 		this.track_id = newId;
 	}

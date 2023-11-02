@@ -3,7 +3,7 @@ import { useMemo } from 'preact/hooks';
 import { useSelector } from 'react-redux';
 import { playerStateSelects } from 'Store/playerStateSlice';
 
-import { IconPlay, IconPause } from '@/ListenLive/Icons';
+import { IconPlay, IconPause } from '@/ui/Icons';
 
 import useLogRender from 'Utils/useLogRender';
 

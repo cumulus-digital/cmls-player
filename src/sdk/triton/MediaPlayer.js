@@ -15,23 +15,24 @@ const log = new Logger('Triton SDK / MediaPlayer');
 
 import { stream_status } from 'Consts';
 
-import { SDK } from '..';
+//import { TritonSDK } from '.';
 import { batch } from 'react-redux';
 
-export class MediaPlayer {
+export default class MediaPlayer {
+	parent;
 	el;
-	player;
 	defaultCallback;
 	playbackCompleteCallback;
 	hasPlayed = false;
 
-	constructor(defaultCallback = null) {
+	constructor(parent, defaultCallback = null) {
+		this.parent = parent;
 		if (defaultCallback) {
 			this.defaultCallback = defaultCallback;
 		}
 
 		import(
-			/* webpackChunkName: 'stream-sdk/triton/MediaPlayer' */
+			/* webpackChunkName: 'sdk/triton-MediaPlayer' */
 			/* webpackMode: 'lazy' */
 			'./MediaPlayer.scss'
 		);
@@ -41,7 +42,7 @@ export class MediaPlayer {
 				<div class="outer-container">
 					<div class="inner-container">
 						<div
-							id={`${config.mediaplayer_id_prefix}-${SDK.mediaPlayerId}`}
+							id={`${config.mediaplayer_id_prefix}-${this.parent.mediaPlayerId}`}
 							class="player"
 						></div>
 					</div>
@@ -49,7 +50,9 @@ export class MediaPlayer {
 			</div>
 		);
 		document.body.appendChild(this.el);
+	}
 
+	onReady(player) {
 		const listeners = {
 			'ad-playback-complete': this.onPlaybackComplete.bind(this),
 			'ad-playback-error': this.onPlaybackError.bind(this),
@@ -57,7 +60,7 @@ export class MediaPlayer {
 		};
 
 		for (let k in listeners) {
-			SDK.getPlayer().addEventListener(k, listeners[k]);
+			player.addEventListener(k, listeners[k]);
 		}
 	}
 
@@ -168,6 +171,7 @@ export class MediaPlayer {
 		store.dispatch(
 			playerStateActions['set/status'](stream_status.LIVE_PREROLL)
 		);
-		SDK.playVastAd(adConfig);
+
+		this.parent.playVastAd(adConfig);
 	}
 }

@@ -22,6 +22,7 @@ const useMarquee = (ref) => {
 	});
 
 	const genObserver = (el, val) => {
+		if (!el) return;
 		const observer = new ResizeObserver((entries) => {
 			let width;
 			for (const entry of entries) {
@@ -39,12 +40,14 @@ const useMarquee = (ref) => {
 	};
 
 	useEffect(() => {
+		if (!ref?.current?.firstChild) return;
+
 		const parentObserver = genObserver(ref.current, parentWidth);
 		const childObserver = genObserver(ref.current.firstChild, childWidth);
 
 		return () => {
-			parentObserver.disconnect();
-			childObserver.disconnect();
+			parentObserver && parentObserver.disconnect();
+			childObserver && childObserver.disconnect();
 		};
 	}, [ref]);
 

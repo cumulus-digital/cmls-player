@@ -1,6 +1,6 @@
 import { appSignals } from '@/signals';
 import { effect } from '@preact/signals';
-import { SDK } from '.';
+import { SDK } from 'SDK';
 import store from 'Store';
 
 import { stream_status } from 'Consts';
@@ -130,15 +130,27 @@ if ('mediaSession' in navigator) {
 					);
 				}
 			};
-			new observeStore(store, handleCuepointChange, (state) => {
-				const status = playerStateSelects.status(state);
-				const playing = playerStateSelects.playing(state);
-				const station = playerStateSelects['station/current'](state);
-				const cuepoint = playerStateSelects['station/cuepoint'](
-					state,
-					station
-				);
-				return { status, playing, station, cuepoint };
+			const cuePointObserver = new observeStore(
+				store,
+				handleCuepointChange,
+				(state) => {
+					const status = playerStateSelects.status(state);
+					const playing = playerStateSelects.playing(state);
+					const station =
+						playerStateSelects['station/current'](state);
+					const cuepoint = playerStateSelects['station/cuepoint'](
+						state,
+						station
+					);
+					return { status, playing, station, cuepoint };
+				}
+			);
+
+			window.addEventListener('pagehide', () => {
+				cuePointObserver.unsubscribe();
+			});
+			window.addEventListener('pageshow', () => {
+				if (cuePointObserver) cuePointObserver.subscribe();
 			});
 		}
 	});

@@ -4,14 +4,13 @@ import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 
 import { playerStateSelects } from 'Store/playerStateSlice';
 
-import { IconPlay, IconPause } from '@/ListenLive/Icons';
-import Artwork from 'Generics/Artwork';
+import { IconPlay, IconPause } from '@/ui/Icons';
+import Artwork from '@/ui/Generics/Artwork';
 
-import { SDK } from '@/stream-sdk';
-import ScrollLabel from 'Generics/ScrollLabel';
+import { SDK } from 'SDK';
+import ScrollLabel from 'UI/Generics/ScrollLabel';
 import useLogRender from 'Utils/useLogRender';
 import { AppContext } from '@/signals';
-import { fetchArtwork } from '@/stream-sdk/triton/CuePointHandler';
 
 export default function DropdownStation(props) {
 	const appState = useContext(AppContext);
@@ -68,7 +67,7 @@ export default function DropdownStation(props) {
 		) {
 			if (cuepoint?.artwork !== false && cuepoint?.artwork !== 1) {
 				// Fetch artwork
-				fetchArtwork(props.mount);
+				SDK.fetchArtwork({ mount: props.mount, cue: cuepoint });
 			}
 
 			return (

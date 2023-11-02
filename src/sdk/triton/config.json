@@ -1,0 +1,33 @@
+{
+	"url": "'//sdk.listenlive.co/web/2.9/td-sdk.min.js'",
+	"td_player_config": {
+		"coreModules": [
+			{
+				"id": "MediaPlayer",
+				"playerId": "cmlsmediaplayer-player",
+				"geoTargeting": {
+					"desktop": { "isActive": false }
+				},
+				"plugins": [{ "id": "vastAd" }]
+			},
+			{ "id": "NowPlayingApi" }
+		]
+	},
+	"status_map": {
+		"_comment": "Map INTERFACE_STATUS: COMMON_STATUS. See src/consts.js",
+		"LIVE_STOP": "LIVE_STOP",
+		"LIVE_PAUSE": "LIVE_PAUSE",
+		"LIVE_PLAYING": "LIVE_PLAYING",
+		"LIVE_FAILED": "LIVE_FAILED",
+		"LIVE_PREROLL": "LIVE_PREROLL",
+		"LIVE_BUFFERING": "LIVE_BUFFERING",
+		"LIVE_CONNECTING": "LIVE_CONNECTING",
+		"LIVE_RECONNECTING": "LIVE_RECONNECTING",
+		"GETTING_STATION_INFORMATION": "GETTING_STATION_INFORMATION",
+		"STREAM_GEOBLOCKED": "STREAM_GEOBLOCKED",
+		"STREAM_GEO_BLOCKED_ALTERNATE": "STREAM_GEO_BLOCKED_ALTERNATE",
+		"STREAM_GEO_BLOCKED_NO_ALTERNATE": "STREAM_GEO_BLOCKED_NO_ALTERNATE",
+		"STATION_NOT_FOUND": "STATION_NOT_FOUND",
+		"PLAY_NOT_ALLOWED": "PLAY_NOT_ALLOWED"
+	}
+}

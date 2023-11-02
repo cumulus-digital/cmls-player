@@ -30,6 +30,16 @@ module.exports = (env) => {
 						{
 							autoprefixer: { grid: true },
 						},
+						{
+							cssnano: {
+								preset: [
+									'default',
+									{
+										calc: false,
+									},
+								],
+							},
+						},
 						//isProduction && require('cssnano'),
 					],
 				},
@@ -66,11 +76,15 @@ module.exports = (env) => {
 				'react-dom': 'preact/compat',
 				'react/jsx-runtime': 'preact/jsx-runtime',
 
+				'broadcast-channel': 'broadcast-channel',
+
 				'@': path.resolve(__dirname, 'src'),
 				Config: path.resolve(__dirname, 'src/config.json'),
 				Consts: path.resolve(__dirname, 'src/consts.js'),
 				Utils: path.resolve(__dirname, 'src/utils'),
 				Store: path.resolve(__dirname, 'src/store'),
+				UI: path.resolve(__dirname, 'src/ui'),
+				SDK: path.resolve(__dirname, 'src/sdk'),
 				Generics: path.resolve(__dirname, 'src/generics'),
 			},
 			extensions: ['.mjs', '.js', '.jsx', '.ts', '.tsx', '.json', '...'],
