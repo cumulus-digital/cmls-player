@@ -6,7 +6,7 @@ import {
 	useEffect,
 	useMemo,
 } from 'preact/hooks';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 
 import { playerStateSelects } from 'Store/playerStateSlice';
 
@@ -20,15 +20,13 @@ import { AppContext } from '@/signals';
 import useLogRender from 'Utils/useLogRender';
 
 export default function ListenLive(props) {
-	const appState = useContext(AppContext);
+	useLogRender(log);
 
-	useLogRender('ListenLive');
+	const appState = useContext(AppContext);
 
 	const interactive = useSelector(playerStateSelects.interactive);
 	const status = useSelector(playerStateSelects.status);
 	const stations_count = useSelector(playerStateSelects['stations/count']);
-
-	const dispatch = useDispatch();
 
 	const containerRef = useRef(null);
 

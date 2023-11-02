@@ -4,7 +4,7 @@ import {
 	initMessageListener,
 	initStateWithPrevTab,
 	withReduxStateSync,
-} from 'redux-state-sync';
+} from 'Utils/redux-state-sync';
 import isEqual from 'Utils/isEqual';
 
 import config from 'Config';

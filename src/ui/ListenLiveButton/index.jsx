@@ -84,7 +84,7 @@ export default function ListenLiveButton(props) {
 				</>
 			);
 		}
-	}, [appState.sdk.ready.value, playing]);
+	}, [appState.sdk.ready.value]);
 
 	const togglePlay = useCallback(
 		(e) => {

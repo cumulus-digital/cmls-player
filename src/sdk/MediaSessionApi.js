@@ -7,6 +7,8 @@ import { stream_status } from 'Consts';
 import { observeStore } from 'Store/index';
 import { playerStateSelects } from 'Store/playerStateSlice';
 
+import { addReloadAction, addUnloadAction } from 'Utils/unloadActionCue';
+
 import Logger from 'Utils/Logger';
 const log = new Logger('MediaSession API');
 
@@ -146,10 +148,10 @@ if ('mediaSession' in navigator) {
 				}
 			);
 
-			window.addEventListener('pagehide', () => {
+			addUnloadAction(() => {
 				cuePointObserver.unsubscribe();
 			});
-			window.addEventListener('pageshow', () => {
+			addReloadAction(() => {
 				if (cuePointObserver) cuePointObserver.subscribe();
 			});
 		}

@@ -5,6 +5,7 @@ import store, { observeStore } from './store';
 import { playerStateSelects } from 'Store/playerStateSlice';
 import { appSignals } from './signals';
 import { SDK } from 'SDK';
+import { addReloadAction, addUnloadAction } from 'Utils/unloadActionCue';
 
 // Update button and cue labels
 const labelObserverEffect = () => {
@@ -16,7 +17,7 @@ const labelObserverEffect = () => {
 		appSignals.cue_label.value = cueLabel;
 	}
 };
-new observeStore(store, labelObserverEffect, (state) => {
+const labelObserver = new observeStore(store, labelObserverEffect, (state) => {
 	const status = playerStateSelects.status(state);
 	const current_station = playerStateSelects['station/current'](state);
 	const cuepoint = playerStateSelects['station/cuelabel'](
@@ -28,4 +29,11 @@ new observeStore(store, labelObserverEffect, (state) => {
 		current_station,
 		cuepoint,
 	};
+});
+
+addUnloadAction(() => {
+	labelObserver.unsubscribe();
+});
+addReloadAction(() => {
+	if (labelObserver) labelObserver.subscribe();
 });

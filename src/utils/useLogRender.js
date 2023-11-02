@@ -1,7 +1,7 @@
 import Logger from 'Utils/Logger';
 import { useEffect } from 'preact/hooks';
 
-export default function useLogRender(log) {
+export default function useLogRender(log, extra = null) {
 	if (!window.location.search.includes('logrender')) {
 		return;
 	}
@@ -10,6 +10,10 @@ export default function useLogRender(log) {
 		log = new Logger(log);
 	}
 	useEffect(() => {
-		log.debug('Render');
+		if (extra) {
+			log.debug('Render', extra);
+		} else {
+			log.debug('Render');
+		}
 	});
 }

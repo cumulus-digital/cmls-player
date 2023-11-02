@@ -60,17 +60,18 @@ export default class NowPlayingHandler {
 		let hiddenTime;
 		document.addEventListener('visibilitychange', () => {
 			if (document.hidden) {
-				log.debug('Tab hidden, pausing now playing interval');
+				log.debug('Tab hidden');
 				hiddenTime = Date.now();
-				store.dispatch(
-					playerStateActions['set/fetch_nowplaying'](false)
-				);
 			} else {
-				log.debug('Tab focus returned, resuming now playing interval');
-				store.dispatch(
-					playerStateActions['set/fetch_nowplaying'](true)
-				);
-				if (Date.now() > hiddenTime + interval) {
+				log.debug('Tab focus returned');
+				const now = Date.now();
+				if (
+					now > hiddenTime + interval &&
+					now < hiddenTime + interval * 2
+				) {
+					log.debug(
+						'Tab focused after tick would have fired, forcing fire'
+					);
 					this.forceNowPlayingTick.call(this);
 				}
 			}
@@ -89,6 +90,11 @@ export default class NowPlayingHandler {
 	async nowPlayingTick(forced = false) {
 		if (!isParentWindow()) {
 			log.debug('Not parent window');
+			return;
+		}
+
+		if (document.hidden) {
+			log.debug('Tab is hidden, skipping tick');
 			return;
 		}
 

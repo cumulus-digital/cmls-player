@@ -12,8 +12,10 @@ import ShuffleLabel from '@/ui/Generics/ShuffleLabel';
 
 export default function LabelArea() {
 	useLogRender('LabelArea');
+
 	const appState = useContext(AppContext);
 	const status = useSelector(playerStateSelects.status);
+	const playing = useSelector(playerStateSelects.playing);
 	const current_station = useSelector(
 		playerStateSelects['station/current'],
 		shallowEqual
@@ -33,7 +35,7 @@ export default function LabelArea() {
 
 	const showNowPlaying = useMemo(() => {
 		// don't show if we're not playing
-		if (status !== stream_status.LIVE_PLAYING) {
+		if (status !== stream_status.LIVE_PLAYING || !playing) {
 			return;
 		}
 
@@ -48,7 +50,7 @@ export default function LabelArea() {
 		}
 
 		return <div class="playing-label">Now playing</div>;
-	}, [status, appState.button_height.value]);
+	}, [status, appState.button_height.value, playing]);
 
 	return (
 		<div class={classnames}>

@@ -24,6 +24,7 @@ import MediaPlayer from './MediaPlayer';
 import NowPlayingHandler from './NowPlayingHandler';
 import { SDK } from 'SDK';
 import { appSignals } from '@/signals';
+import generateUuid from 'Utils/generateUuid';
 
 export default class TritonSDK {
 	static player;
@@ -69,12 +70,10 @@ export default class TritonSDK {
 		};
 
 		// Generate random mediaplayer ID
-		parent.mediaPlayerId = Math.floor(
-			100000000 + Math.random() * 900000000
-		);
+		this.mediaPlayerId = generateUuid();
 		tdPlayerConfig.coreModules.find(
 			(mod) => mod.id == 'MediaPlayer'
-		).playerId = `${config.mediaplayer_id_prefix}-${parent.mediaPlayerId}`;
+		).playerId = `${config.mediaplayer_id_prefix}-${this.mediaPlayerId}`;
 
 		const player = this.setPlayer(new window.TDSdk(tdPlayerConfig));
 		this.player = player;
@@ -194,6 +193,7 @@ export default class TritonSDK {
 			},
 		});
 		SDK.emit(ev);
+		SDK?.onStreamStart();
 	}
 	static onStreamStop(e) {
 		const station = playerStateSelects['station/current'](store.getState());
@@ -203,6 +203,7 @@ export default class TritonSDK {
 			},
 		});
 		SDK.emit(ev);
+		SDK?.onStreamStop();
 	}
 	static onStreamError(e) {
 		const station = playerStateSelects['station/current'](store.getState());
@@ -213,6 +214,7 @@ export default class TritonSDK {
 			},
 		});
 		SDK.emit(ev);
+		SDK?.onStreamError();
 	}
 
 	static setPlayer(player) {
@@ -299,6 +301,7 @@ export default class TritonSDK {
 	}
 
 	static stop() {
+		log.debug('Stopping!');
 		this.player.stop();
 	}
 
@@ -319,5 +322,9 @@ export default class TritonSDK {
 			log.error('Error playing vast ad!', e);
 			this.modules?.MediaPlayer?.onPlaybackError(e);
 		}
+	}
+
+	static forceUpdateCuepoints() {
+		this.modules?.NowPlayingHandler?.forceNowPlayingTick();
 	}
 }

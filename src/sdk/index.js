@@ -11,6 +11,8 @@ import { fetchItunesArtwork } from 'Utils/iTunesHelper';
 
 import Logger from 'Utils/Logger';
 import { batch } from 'react-redux';
+import { isLeader } from 'Utils/leaderElection';
+import { addReloadAction, addUnloadAction } from 'Utils/unloadActionCue';
 
 //import TritonSDK from './triton';
 
@@ -77,7 +79,7 @@ export class SDK {
 			if (playing !== this.previousStation) {
 				this.previousStation = playing;
 
-				if (!playing && this.isPlayingHere()) {
+				if (!playing) {
 					this.onStopMessage();
 				}
 			}
@@ -94,13 +96,6 @@ export class SDK {
 		);
 
 		if (isParentWindow()) {
-			// Stop playing if the playing window is closed
-			window.addEventListener('pagehide', (e) => {
-				if (this.isPlayingHere()) {
-					this.stop();
-				}
-			});
-
 			// Handle requests from children
 			window.addEventListener('message', (e) => {
 				const data = e?.data;
@@ -114,10 +109,24 @@ export class SDK {
 				}
 			});
 		}
-		window.addEventListener('pagehide', (e) => {
+
+		// Stop playing if a playing window is closed
+		addUnloadAction(() => {
 			stateObserver.unsubscribe();
-		});
-		window.addEventListener('pageshow', (e) => {
+			if (this.isPlayingHere()) {
+				batch(() => {
+					this.onStopMessage();
+					store.dispatch(playerStateActions['set/playing'](false));
+					store.dispatch(
+						playerStateActions['set/status'](
+							stream_status.LIVE_STOP
+						)
+					);
+				});
+			}
+		}, 0);
+
+		addReloadAction(() => {
 			if (stateObserver) stateObserver.subscribe();
 		});
 	}
@@ -166,6 +175,10 @@ export class SDK {
 			w?.postMessage(message, '*');
 		});
 	}
+
+	static onStreamStart() {}
+	static onStreamStop() {}
+	static onStreamError() {}
 
 	/**
 	 * Should never be called directly!
@@ -224,16 +237,24 @@ export class SDK {
 			}
 			log.debug('Setting playing to false');
 			store.dispatch(playerStateActions['set/playing'](false));
+
+			// Handle any funky previous states
 			if (wasStatus !== stream_status.LIVE_PLAYING) {
 				log.debug('Setting status to LIVE_STOP');
 				store.dispatch(
 					playerStateActions['set/status'](stream_status.LIVE_STOP)
 				);
 			}
+
 			if (this.isPlayingHere()) {
 				log.debug('Telling interface to stop.');
 				this.interface?.stop();
 				this.playingHere = false;
+			}
+		});
+		isLeader().then((iAmLeader) => {
+			if (iAmLeader) {
+				this.interface?.forceUpdateCuepoints();
 			}
 		});
 	}

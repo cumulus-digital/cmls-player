@@ -1,6 +1,12 @@
 import { BroadcastChannel, createLeaderElection } from 'broadcast-channel';
 import config from 'Config';
 
+import {
+	addReloadAction,
+	addUnloadAction,
+	removeUnloadAction,
+} from 'Utils/unloadActionCue';
+
 import Logger from 'Utils/Logger';
 const log = new Logger('LeaderElection');
 
@@ -15,15 +21,17 @@ export const createChannel = () => {
 			},
 		},
 	});
+	const closeChannel = () => {
+		if (channel?.close) {
+			channel.close();
+		}
+	};
+	removeUnloadAction(closeChannel);
+	addUnloadAction(closeChannel, Number.MAX_SAFE_INTEGER);
 	return channel;
 };
 
-window.addEventListener('pagehide', () => {
-	if (channel?.close) {
-		channel.close();
-	}
-});
-window.addEventListener('pageshow', () => {
+addReloadAction(() => {
 	if (!channel || channel.isClosed) {
 		channel = createChannel();
 	}

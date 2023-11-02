@@ -25,10 +25,12 @@
 	width: 0;
 	height: 0;
 	overflow: hidden;
+	visibility: hidden;
+	opacity: 0;
 
-	background-color: rgba(0, 0, 0, 0);
-	backdrop-filter: none;
-	transition: all 0.4s;
+	background-color: rgba(0, 0, 0, 0.75);
+	backdrop-filter: blur(3px);
+	transition: opacity 0.4s;
 
 	//pointer-events: all;
 
@@ -94,7 +96,7 @@
 		min-width: 100vw;
 		min-height: 100vh;
 		background-color: rgba(0, 0, 0, 0.75);
-		backdrop-filter: blur(3px);
+		opacity: 1;
 
 		.outer-container,
 		.inner-container {
