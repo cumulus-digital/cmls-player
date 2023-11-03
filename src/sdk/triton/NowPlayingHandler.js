@@ -1,5 +1,5 @@
 import store from 'Store';
-import { playerStateActions } from 'Store/playerStateSlice';
+import { playerStateActions, playerStateSelects } from 'Store/playerStateSlice';
 
 import fixSassJson from 'Utils/fixSassJson';
 
@@ -14,6 +14,7 @@ import generateIdFromString from 'Utils/generateIdFromString';
 import { SDK } from 'SDK';
 import isParentWindow from 'Utils/isParentWindow';
 import { isLeader } from 'Utils/leaderElection';
+import { appSignals } from '@/signals';
 
 let nowPlayingInterval;
 
@@ -35,50 +36,52 @@ export default class NowPlayingHandler {
 			throw new Error('Player must have NowPlayingApi module.');
 		}
 
-		const listeners = {
-			'list-loaded': this.onListLoaded.bind(this),
-			'stream-stop': this.forceNowPlayingTick.bind(this),
-			'stream-error': this.forceNowPlayingTick.bind(this),
-			'stream-fail': this.forceNowPlayingTick.bind(this),
-		};
+		if (isParentWindow()) {
+			const listeners = {
+				'list-loaded': this.onListLoaded.bind(this),
+				'stream-stop': this.forceNowPlayingTick.bind(this),
+				'stream-error': this.forceNowPlayingTick.bind(this),
+				'stream-fail': this.forceNowPlayingTick.bind(this),
+			};
 
-		for (let ev in listeners) {
-			log.debug(
-				'Attaching listener',
-				{ event: ev, callback_name: listeners[ev].name },
-				listeners[ev]
-			);
-			player.addEventListener(ev, listeners[ev]);
-		}
-
-		const interval = config.offline_nowplaying_interval || 30000;
-		this.nowPlayingInterval = setInterval(
-			this.nowPlayingTick.bind(this),
-			interval
-		);
-
-		let hiddenTime;
-		document.addEventListener('visibilitychange', () => {
-			if (document.hidden) {
-				log.debug('Tab hidden');
-				hiddenTime = Date.now();
-			} else {
-				log.debug('Tab focus returned');
-				const now = Date.now();
-				if (
-					now > hiddenTime + interval &&
-					now < hiddenTime + interval * 2
-				) {
-					log.debug(
-						'Tab focused after tick would have fired, forcing fire'
-					);
-					this.forceNowPlayingTick.call(this);
-				}
+			for (let ev in listeners) {
+				log.debug(
+					'Attaching listener',
+					{ event: ev, callback_name: listeners[ev].name },
+					listeners[ev]
+				);
+				player.addEventListener(ev, listeners[ev]);
 			}
-		});
 
-		log.debug('Offline Now Playing interval has begun.', { interval });
-		this.nowPlayingTick.call(this);
+			const interval = config.offline_nowplaying_interval || 30000;
+			this.nowPlayingInterval = setInterval(
+				this.nowPlayingTick.bind(this),
+				interval
+			);
+
+			let hiddenTime;
+			document.addEventListener('visibilitychange', () => {
+				if (document.hidden) {
+					log.debug('Tab hidden');
+					hiddenTime = Date.now();
+				} else {
+					log.debug('Tab focus returned');
+					const now = Date.now();
+					if (
+						now > hiddenTime + interval &&
+						now < hiddenTime + interval * 2
+					) {
+						log.debug(
+							'Tab focused after tick would have fired, forcing fire'
+						);
+						this.forceNowPlayingTick.call(this);
+					}
+				}
+			});
+
+			log.debug('Offline Now Playing interval has begun.', { interval });
+			this.nowPlayingTick.call(this);
+		}
 	}
 
 	/**
@@ -117,12 +120,6 @@ export default class NowPlayingHandler {
 
 			for (let mount in playerState.stations) {
 				const station = playerState.stations[mount];
-				const last_unresolved_cuepoint =
-					station.last_unresolved_cuepoint;
-				const unresolved_requests =
-					station.unresolved_nowplaying_requests;
-				const max_unresolved_requests =
-					config.max_unresolved_nowplaying_requests || 5;
 
 				// Do not fetch if station is currently playing
 				if (mount === playerState.playing) {
@@ -133,6 +130,13 @@ export default class NowPlayingHandler {
 				if (!station.fetch_nowplaying) {
 					continue;
 				}
+
+				const last_unresolved_cuepoint =
+					station.last_unresolved_cuepoint;
+				const unresolved_requests =
+					station.unresolved_nowplaying_requests;
+				const max_unresolved_requests =
+					config.max_unresolved_nowplaying_requests || 5;
 
 				// Do not fetch if station has too many unresolved requests
 				if (unresolved_requests > max_unresolved_requests) {
