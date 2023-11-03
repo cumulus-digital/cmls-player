@@ -127,13 +127,15 @@ export const searchItunes = (term) => {
 			log.debug('Loading art from local cache');
 			return resolve(artCache.get(search.toString())?.data);
 		}
-		if (artCache.size > 10) {
-			log.debug('Deleting oldest 5 items from art cache');
-			artCache
-				.keys()
-				.sort((k1, k2) => (k1.timestamp > k2.timestamp ? 1 : -1))
-				.slice(5)
-				.forEach((k) => artCache.delete(k));
+		if (artCache.size > 60) {
+			log.debug('Deleting oldest 10 items from art cache');
+			Array.from(artCache.keys())
+				?.sort(
+					(k1, k2) =>
+						artCache.get(k1).timestamp - artCache.get(k2).timestamp
+				)
+				?.slice(10)
+				?.forEach((k) => artCache.delete(k));
 		}
 		log.debug('Making iTunes search request', { ...search });
 		fetch(url.toString(), {
