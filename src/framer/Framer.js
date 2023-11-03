@@ -13,6 +13,9 @@ export class Framer {
 	iframe;
 	loadingIndicator;
 
+	lastLocation = Object.assign({}, window.location);
+	wasHashChange = false;
+
 	updateMessageKey = 'cmls_framer:updateWindowLocation';
 
 	constructor() {
@@ -21,6 +24,8 @@ export class Framer {
 		} else {
 			this.initChild();
 		}
+
+		this.updateLastLocation();
 
 		// Update all forms that don't have targets to
 		// target our iframe
@@ -33,6 +38,17 @@ export class Framer {
 				}
 			});
 		});
+	}
+
+	updateLastLocation(location) {
+		if (!location instanceof URL) {
+			location = new URL(location);
+		}
+		log.debug(
+			'new lastLocation',
+			Object.assign({}, location || window.location)
+		);
+		this.lastLocation = Object.assign({}, location || window.location);
 	}
 
 	handleMessage(msg) {
@@ -66,7 +82,7 @@ export class Framer {
 	}
 
 	initParent() {
-		log.debug('Loaded in parent');
+		log.debug('Loaded in parent', this.lastUrl);
 		this.iframe = (
 			<iframe
 				id={siteframe_id}
@@ -110,6 +126,17 @@ export class Framer {
 		}
 	}
 
+	sendStateToParent() {
+		const msg = {
+			message: this.updateMessageKey,
+			readystate: document.readyState,
+			title: document.title,
+			location: window.self.location.href,
+		};
+		log.debug('Sending message to parent', msg);
+		window.parent.postMessage(msg, window.location.originframe);
+	}
+
 	initChild() {
 		log.debug('Loaded in child.');
 		const sendState = () => {
@@ -122,26 +149,58 @@ export class Framer {
 			log.debug('Sending message to parent', msg);
 			window.parent.postMessage(msg, window.location.originframe);
 		};
-		const listeners = {
+		const documentListeners = {
 			readystatechange: sendState.bind(this),
 			DOMContentLoaded: sendState.bind(this),
 			click: this.handleClick.bind(this),
 		};
+		const windowListeners = {
+			popstate: this.handlePopState.bind(this),
+		};
 
-		for (let ev in listeners) {
+		for (let ev in documentListeners) {
 			log.debug(
-				'Attaching listener',
-				{ event: ev, callback_name: listeners[ev].name },
-				listeners[ev]
+				'Attaching document listener',
+				{ event: ev, callback_name: documentListeners[ev].name },
+				documentListeners[ev]
 			);
-			document.addEventListener(ev, listeners[ev]);
+			document.addEventListener(ev, documentListeners[ev]);
 		}
+		for (let ev in windowListeners) {
+			log.debug(
+				'Attaching window listener',
+				{ event: ev, callback_name: windowListeners[ev].name },
+				windowListeners[ev]
+			);
+			window.self.addEventListener(ev, windowListeners[ev]);
+		}
+
 		sendState();
 	}
 
 	handlePopState(e) {
-		log.debug('Caught popstate', e);
-		this.iframe.contentDocument.location.replace(window.location.href);
+		const removeCacheBuster = (s) =>
+			s.replace(/cachebuster=[\d\.]+/, '').replace(/debug(=true)?/, '');
+		const oldUrl = `${this.lastLocation?.origin}${
+			this.lastLocation?.pathname
+		}${removeCacheBuster(this.lastLocation?.search)}`;
+		const newUrl = `${window.location.origin}${
+			window.location.pathname
+		}${removeCacheBuster(window.location.search)}`;
+		log.debug('Caught popstate', e, { oldUrl, newUrl });
+		if (oldUrl === newUrl) {
+			if (!isParentWindow()) {
+				this.sendStateToParent();
+			}
+			return;
+		}
+		if (isParentWindow()) {
+			log.debug('Updating iframe location');
+			this.iframe.contentDocument.location.replace(window.location.href);
+		} else {
+			this.sendStateToParent();
+		}
+		this.updateLastLocation();
 	}
 
 	/**
@@ -172,6 +231,12 @@ export class Framer {
 		return false;
 	}
 
+	generateUrl(href = '') {
+		href = String(href);
+		const url = new URL(href, window.location.origin);
+		return url;
+	}
+
 	/**
 	 * Checks if a string is a URL, and if so, checks for length
 	 * and same origin.
@@ -186,8 +251,10 @@ export class Framer {
 		}
 
 		// We don't deal with simple, same-page hashed links
+		// NOTE: THIS PREVENTS HASH LINKS FROM UPDATING
+		// PARENT WINDOW LOCATION! need a better way.
 		if (href.charAt(0) === '#') {
-			return false;
+			//return false;
 		}
 
 		const url = new URL(href, window.location.origin);
@@ -216,14 +283,51 @@ export class Framer {
 			return;
 		}
 
-		const link = this.processLink(target);
-		if (link) {
-			e.preventDefault();
-			log.debug('Processed click!', link);
-			this.updateLocation(link);
-		} else {
-			log.debug('Link did not meet capture criteria', { target, link });
+		const href = target.getAttribute('href');
+		const dataHref = target.getAttribute('data-href');
+
+		// Ignore empty links
+		if (!href && !dataHref) {
+			log.debug('Ignoring empty link', { target, href, dataHref });
+			return;
 		}
+
+		const url = this.generateUrl(dataHref || href);
+
+		if (!url) {
+			log.debug('Ignoring malformed url', {
+				target,
+				href,
+				dataHref,
+				url,
+			});
+			return;
+		}
+
+		// Handle cross-origin links
+		if (url.origin !== window.location.origin) {
+			const linkTarget = target.getAttribute('target');
+			if (!linkTarget || linkTarget === '_self') {
+				target.setAttribute('target', '_parent');
+			}
+			log.debug('Pass-through cross-origin link', { target, url });
+			return;
+		}
+
+		// Ignore in-page hashes
+		if (
+			(dataHref || href).charAt(0) === '#' ||
+			(url.pathname === window.location.pathname &&
+				url.search === window.location.search &&
+				(url.hash.length ||
+					url.href.charAt(url.href.length - 1) === '#'))
+		) {
+			log.debug('Ignoring in-page hash', url.hash);
+			return;
+		}
+
+		e.preventDefault();
+		this.updateLocation(url);
 	}
 
 	handleFormSubmitEvent(e) {
@@ -268,6 +372,7 @@ export class Framer {
 		}
 		const newUrl = new URL(location, window.location.origin);
 		if (newUrl && newUrl.href !== window.location.href) {
+			log.debug('Pushing history state', newUrl);
 			history.pushState({}, '', newUrl);
 		}
 	}

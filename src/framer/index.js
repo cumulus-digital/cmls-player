@@ -14,7 +14,7 @@ import(
 
 // Load all patches
 function requireAll(r) {
-	r.keys().forEach(r);
+	r.keys().sort().forEach(r);
 }
 requireAll(
 	/* webpackChunkName: 'framer/[request]' */
