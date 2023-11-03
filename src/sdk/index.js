@@ -424,6 +424,14 @@ export class SDK {
 			}
 
 			if (newCue.type === 'track') {
+				const ev = new CustomEvent('cmls-player-cue-point', {
+					detail: {
+						mount,
+						cuepoint: newCue,
+					},
+				});
+				this.emit(ev);
+
 				// fetch artwork for track types
 				log.debug(this);
 				this.fetchArtwork({ mount, cue: newCue });
