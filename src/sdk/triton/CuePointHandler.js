@@ -61,9 +61,10 @@ export default class CuePointHandler {
 		return mount;
 	}
 
-	sendCuePointEvent(cue, origin_event) {
-		const ev = new CustomEvent('cmls-player-stream-cue-point', {
+	sendCuePointEvent(mount, cue, origin_event) {
+		const ev = new CustomEvent('cmls-player-live-cue-point', {
 			detail: {
+				mount,
 				cuepoint: cue,
 				event: origin_event,
 			},
@@ -95,7 +96,7 @@ export default class CuePointHandler {
 
 		const cuePoint = new CuePoint(this.generateCuePoint(cueData));
 
-		this.sendCuePointEvent(cuePoint, e);
+		this.sendCuePointEvent(mount, cuePoint, e);
 
 		SDK.setCuePoint({ mount, cue: cuePoint });
 		this.clearAdBreakTimeout(mount);
@@ -130,7 +131,7 @@ export default class CuePointHandler {
 			type: CuePoint.types.SPEECH,
 		});
 
-		this.sendCuePointEvent(cuePoint, e);
+		this.sendCuePointEvent(mount, cuePoint, e);
 
 		SDK.setCuePoint({ mount, cue: cuePoint });
 		this.clearAdBreakTimeout(mount);
@@ -259,13 +260,27 @@ export default class CuePointHandler {
 			return;
 		}
 
+		this.clearAdBreakTimeout(station.mount);
+
+		if (
+			playerState.cuepoints?.[station.mount]?.type !== CuePoint.types.AD
+		) {
+			log.warn(
+				'Received ad break cue point complete that did not follow an ad!',
+				{
+					mount: station.mount,
+					event: e,
+					current_cue: playerState.cuepoints[station.mount],
+				}
+			);
+			return;
+		}
+
 		log.debug('Ad break complete', {
 			mount: station.mount,
 			event: e,
 			playerState,
 		});
-
-		this.clearAdBreakTimeout(station.mount);
 
 		SDK.setCuePoint({ mount: station.mount });
 	}
