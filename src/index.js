@@ -213,6 +213,8 @@ window.customElements.define(
 			});
 
 			SDK.init(appSignals.sdk.type.peek());
+			window.cmls_player = window.cmls_player || {};
+			window.cmls_player.play = SDK.play;
 
 			register(CmlsPlayerProvider, 'cmls-player-component', [], {
 				shadow: true,
