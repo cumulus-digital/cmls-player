@@ -670,7 +670,7 @@ button {
 	}
 
 	&.scroll > span {
-		animation: calc(var(--speed, 10s) * 1.15) infinite linear 1.5s
+		animation: calc(var(--speed, 10s) * 1.25) infinite linear 1.5s
 			scrollLabel;
 		--distance: calc(-100% - var(--spacing, 1.3em));
 
@@ -686,7 +686,7 @@ button {
 			0% {
 				transform: translate3d(0, 0, 0);
 			}
-			85% {
+			80% {
 				transform: translate3d(var(--distance), 0, 0);
 			}
 			100% {

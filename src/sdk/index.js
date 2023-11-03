@@ -14,6 +14,8 @@ import { batch } from 'react-redux';
 import { isLeader } from 'Utils/leaderElection';
 import { addReloadAction, addUnloadAction } from 'Utils/unloadActionCue';
 
+import config from 'Config';
+
 //import TritonSDK from './triton';
 
 const log = new Logger('SDK Controller');
@@ -448,6 +450,7 @@ export class SDK {
 		if (!cue) {
 			cue = playerState.cuepoints?.[mount];
 		}
+		cue = Object.assign({}, cue);
 
 		const station = playerState.stations[mount];
 
@@ -468,6 +471,21 @@ export class SDK {
 			return fetchItunesArtwork(cue.artist, cue.title)
 				.then((artUrl) => {
 					if (artUrl?.length) {
+						if (
+							playerState.cuepoints[mount].track_id !==
+							cue.track_id
+						) {
+							log.warn(
+								'Cuepoint changed before artwork fetch completed!',
+								{
+									mount,
+									requested_cue: cue,
+									current_cue:
+										playerState.cuepoints[mount].track_id,
+								}
+							);
+							return;
+						}
 						log.debug('Setting cuepoint artwork', {
 							mount,
 							cue,

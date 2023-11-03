@@ -5,6 +5,7 @@ const browserslist = require('browserslist');
 const TerserPlugin = require('terser-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const jsonInSassImporter = require('node-sass-json-importer');
 const { ModuleFederationPlugin } = require('webpack').container;
 
 module.exports = (env) => {
@@ -49,6 +50,9 @@ module.exports = (env) => {
 			loader: 'sass-loader',
 			options: {
 				sourceMap: !isProduction,
+				sassOptions: {
+					importer: jsonInSassImporter(),
+				},
 			},
 		},
 	];
@@ -230,6 +234,9 @@ module.exports = (env) => {
 
 		devtool: isProduction ? false : 'source-map',
 		devServer: {
+			client: {
+				overlay: false,
+			},
 			static: './',
 			host,
 			port,

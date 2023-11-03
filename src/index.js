@@ -23,6 +23,8 @@ const config = fixSassJson(baseConfig);
 import { SDK } from 'SDK';
 import ListenLive from 'UI';
 
+import './framer';
+
 import(
 	/* webpackChunkName: 'outer' */
 	/* webpackMode: 'lazy' */
@@ -189,7 +191,10 @@ window.customElements.define(
 				if (
 					this &&
 					!path.includes(this) &&
-					!(SDK?.mediaPlayer?.el && path.includes(SDK.mediaPlayer.el))
+					!(
+						SDK?.interface?.modules?.MediaPlayer?.el &&
+						path.includes(SDK.interface.modules.MediaPlayer.el)
+					)
 				) {
 					appSignals.dropdown_open.value = false;
 				}
