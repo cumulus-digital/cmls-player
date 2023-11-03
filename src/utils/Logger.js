@@ -114,7 +114,13 @@ export default class Logger {
 	}
 
 	handleMessage(type, ...request) {
-		if (!window.location.search.includes('debug')) return;
+		// Require debug in url query for debug or info levels
+		if (
+			['debug', 'info'].includes(type) &&
+			!window.location.search.includes('debug')
+		) {
+			return;
+		}
 		let { message, headerLength } = this.resolveMessage(request);
 		this.logMessage(type, message, headerLength);
 	}
