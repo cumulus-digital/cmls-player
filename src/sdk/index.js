@@ -448,10 +448,17 @@ export class SDK {
 	 * @param {object} param0.cue Cue point
 	 * @param {string} param0.cue.artist
 	 * @param {string} param0.cue.title
+	 * @param {boolean} param0.skipWindowCheck It's sometimes useful to skip
+	 *                                         checking if we're the top window,
+	 *                                         such as in dropdown_open
 	 * @returns {Promise|false}
 	 */
-	static async fetchArtwork({ mount = null, cue = {} }) {
-		if (!isParentWindow()) return;
+	static async fetchArtwork({
+		mount = null,
+		cue = {},
+		skipWindowCheck = false,
+	}) {
+		if (!skipWindowCheck && !isParentWindow()) return;
 
 		const { playerState } = store.getState();
 

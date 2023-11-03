@@ -67,7 +67,11 @@ export default function DropdownStation(props) {
 		) {
 			if (cuepoint?.artwork !== false && cuepoint?.artwork !== 1) {
 				// Fetch artwork
-				SDK.fetchArtwork({ mount: props.mount, cue: cuepoint });
+				SDK.fetchArtwork({
+					mount: props.mount,
+					cue: cuepoint,
+					skipWindowCheck: true,
+				});
 			}
 
 			return (
