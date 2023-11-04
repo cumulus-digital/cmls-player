@@ -74,9 +74,14 @@ body {
 			transition: opacity 0.35s, width 0s 0s, height 0s 0s;
 		}
 	}
-	&.iframe-loaded > ##{$siteframe_id} {
-		min-width: 100vw;
-		min-height: 100vh;
+	&.iframe-loaded {
+		height: 100%;
+		overflow: hidden;
+
+		& > ##{$siteframe_id} {
+			min-width: 100vw;
+			min-height: 100vh;
+		}
 	}
 
 	& > #td-player-container {

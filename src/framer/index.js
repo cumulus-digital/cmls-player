@@ -1,4 +1,4 @@
-const { Framer } = require('./Framer');
+import { Framer } from './Framer';
 
 import(
 	/* webpackChunkName: 'framer' */
@@ -11,18 +11,6 @@ import(
 		style.default.use();
 	}
 });
-
-// Load all patches
-function requireAll(r) {
-	r.keys().sort().forEach(r);
-}
-requireAll(
-	/* webpackChunkName: 'framer/[request]' */
-	/* webpackMode: 'lazy' */
-	/* webpackPrefetch: true */
-	/* webpackPreload: true */
-	require.context('./patches/', true, /\.js$/)
-);
 
 const framer = new Framer();
 window.cmls_player = window.cmls_player || {};

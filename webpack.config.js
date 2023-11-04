@@ -66,7 +66,7 @@ module.exports = (env) => {
 		mode,
 		target,
 		entry: {
-			bundle: './src/index.js',
+			cmls_player: './src/index.js',
 		},
 		output: {
 			filename: '[name].js',
