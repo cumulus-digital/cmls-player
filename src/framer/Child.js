@@ -1,106 +1,143 @@
 import domReady from 'Utils/domReady';
 
 import Logger from 'Utils/Logger';
+import { Framer } from './Framer';
 const log = new Logger('Framer / Child');
 
 export default class Child {
+	/**
+	 * @type {Framer}
+	 */
 	framer;
+
+	/**
+	 * @type {MutationObserver}
+	 */
+	titleObserver;
+
+	ready = false;
 
 	constructor(framer) {
 		this.framer = framer;
-		this.init();
-	}
 
-	init() {
-		log.debug('Initializing child');
+		if (!this.framer.isChildWindow()) {
+			log.warn('Child class instantiated outside of child window!');
+			return;
+		}
 
-		this.framer.addListeners(
-			{
-				readystatechange: this.sendStateToParent.bind(this),
-				DOMContentLoaded: this.sendStateToParent.bind(this),
-				click: this.handleClick.bind(this),
-			},
-			document
+		log.debug('Initializing Child');
+
+		document.addEventListener(
+			'readystatechange',
+			this.onStateChange.bind(this),
+			{ once: true }
 		);
-
 		this.framer.addListeners({
-			popstate: this.sendStateToParent.bind(this),
+			hashchange: this.sendFullState.bind(this),
+			click: this.handleClick.bind(this),
+			beforeunload: () => {
+				document.removeEventListener(
+					'readystatechange',
+					this.onStateChange.bind(this)
+				);
+				/*
+				window.parent.postMessage({
+					message: `${this.framer.messageKey}:showLoading`,
+				});
+				*/
+			},
 		});
+		if (!this.titleObserver) {
+			const title = document.querySelector('head title');
+			this.titleObserver = new MutationObserver(
+				this.onStateChange.bind(this)
+			);
+			this.titleObserver.observe(title, {
+				subtree: true,
+				characterData: true,
+				childList: true,
+			});
+		}
 
-		this.sendStateToParent();
+		this.sendFullState();
+		this.ready = true;
 	}
 
-	sendStateToParent() {
+	sendFullState() {
 		const state = {
-			message: this.framer.messageKey,
+			message: `${this.framer.messageKey}:stateChange`,
 			readystate: document.readyState,
+			url: window.self.location.href,
 			title: document.title,
-			location: window.self.location.href,
 		};
 		log.debug('Sending state to parent', state);
-		window.parent.postMessage(state, window.location.originframe);
+		window.parent.postMessage(state, window.location.origin);
+	}
+
+	onStateChange(ev) {
+		if (!this.ready) {
+			this.sendFullState();
+			this.ready = true;
+		}
+		document.removeEventListener(
+			'readystatechange',
+			this.onStateChange.bind(this)
+		);
 	}
 
 	handleClick(ev) {
 		let target = ev.target;
+		const linkLike = ':any-link[href],[data-cmls-href]';
 
-		// Ensure target is link-like
-		if (!target?.matches(':any-link[href],[data-href]')) {
-			target = target.closest(':any-link[href],[data-href]');
+		if (!target?.matches(linkLike)) {
+			target = target.closest(linkLike);
 		}
 
 		if (!target) {
-			log.debug('Click target is not actionable', { target, event: ev });
-			return;
-		}
-
-		const path = ev.composedPath();
-		if (!path.includes(target)) {
-			log.debug('Click target not in event path', {
-				target,
-				path,
-				event: ev,
-			});
-			return;
-		}
-
-		// Ignore links with targets
-		if (target.target) {
-			log.debug('Ignoring targeted link', { target, event: ev });
 			return;
 		}
 
 		const href = this.framer.getResolvedHref(target);
 
-		// ignore empty links
-		if (!href || !href.length) {
-			log.debug('Click target has an empty destination', {
-				target,
-				href,
-			});
+		// Ignore empty links
+		if (!href?.length) {
+			log.debug('Target destination is empty', { target, href });
 			return;
 		}
 
 		const url = this.framer.getUrlObject(href);
 
 		if (!url) {
-			log.debug('Click target generates malformed URL', {
+			log.debug('Target destination generates malformed URL', {
 				target,
 				href,
-				url,
 			});
 			return;
 		}
 
-		// Cross-origin links go to parent
-		if (this.framer.isCrossOrigin(url)) {
-			log.debug('Sending cross-origin link to parent', {
+		// Untargeted, cross-origin links go to parent
+		if (
+			url.origin !== window.location.origin &&
+			(!target.target || target === '_self')
+		) {
+			log.debug('Setting cross-origin link target to parent', {
 				target,
 				href,
 				url,
 			});
 			target.target = '_parent';
 			return;
+		}
+
+		// Ignore targets with target attributes
+		if (target.target) {
+			log.debug('Ignoring targeted link', { target });
+			return;
+		}
+
+		// Handle data-cmls-href
+		if (target.getAttribute('data-cmls-href')) {
+			window.location.href = url.href;
 		}
 	}
 }

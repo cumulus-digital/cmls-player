@@ -3,6 +3,10 @@ import { Framer } from '../Framer-old';
 
 const log = new Logger('Framer / Patch / Headway Mobile Menu');
 
+/**
+ * Strips existing event handlers from Headway Mobile Select navs
+ * and adds our own change handler to process navigation.
+ */
 export default class HeadwayMobileMenu {
 	/**
 	 * @type {Framer}
@@ -20,7 +24,7 @@ export default class HeadwayMobileMenu {
 		const selectnavs = document.querySelectorAll('select.selectnav');
 		if (selectnavs) {
 			selectnavs.forEach((nav) => {
-				log.debug('Altering change handler for nav', nav);
+				log.debug('Rebuilding change handler for nav', nav);
 				const newNav = nav.cloneNode(true);
 				nav.parentNode.replaceChild(newNav, nav);
 				newNav.addEventListener('change', (ev) => {
@@ -90,7 +94,11 @@ export default class HeadwayMobileMenu {
 
 					// ALL OTHER CASES
 					ev.preventDefault();
-					window.location.href = url.href;
+					if (this.framer.isChildWindow()) {
+						window.location.href = url.href;
+					} else {
+						this.framer.parent.updateChildLocation(url);
+					}
 				});
 			});
 		}

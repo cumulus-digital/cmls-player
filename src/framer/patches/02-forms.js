@@ -1,6 +1,3 @@
-/**
- * Update the target on all form elements to point to our iframe
- */
 import { Framer } from '../Framer';
 
 import config from 'Config';
@@ -9,6 +6,9 @@ const { siteframe_id } = config;
 import Logger from 'Utils/Logger';
 const log = new Logger('Framer / Patch / AlterFormTargets');
 
+/**
+ * Update the target on all form elements to point to our iframe
+ */
 export default class AlterFormTargets {
 	framer;
 

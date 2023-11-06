@@ -13,8 +13,8 @@ body {
 		flex-wrap: wrap;
 		align-content: center;
 		justify-content: center;
-		background-color: rgba(255, 255, 255, 0.9);
-		backdrop-filter: blur(5px);
+		background-color: rgba(0, 0, 0, 0.7);
+		backdrop-filter: blur(2px);
 		opacity: 0;
 		width: 0;
 		height: 0;
@@ -23,7 +23,7 @@ body {
 		top: 0;
 		left: 0;
 		z-index: 999998;
-		transition: opacity 0.35s, width 0s 1s, height 0s 1s;
+		transition: opacity 0.15s, width 0s 0s, height 0s 0s;
 
 		#js8d {
 			position: relative;
@@ -34,7 +34,7 @@ body {
 			transform: rotate(180deg);
 
 			div {
-				background: #000;
+				background: #fff;
 				width: 5px;
 				animation: sound 0ms -800ms linear infinite alternate;
 
@@ -71,7 +71,7 @@ body {
 			font-size: 2em;
 			font-weight: bold;
 			color: #000;
-			transition: opacity 0.35s, width 0s 0s, height 0s 0s;
+			transition: opacity 0.15s, width 0s 0s, height 0s 0s;
 		}
 	}
 	&.iframe-loaded {

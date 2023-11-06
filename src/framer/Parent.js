@@ -14,27 +14,18 @@ export default class Parent {
 	 */
 	framer;
 
-	useFrame = false;
-	isPopState = false;
+	usingIframe = false;
 
 	constructor(framer) {
 		this.framer = framer;
-		this.init();
-	}
 
-	init() {
-		log.debug('Initializing parent');
+		if (this.framer.isChildWindow()) {
+			log.warn('Parent class instantiated inside child window!');
+			return;
+		}
 
-		this.framer.iframe = (
-			<iframe
-				id={siteframe_id}
-				name={siteframe_id}
-				width={0}
-				height={0}
-				frameborder={0}
-				class="do-not-remove"
-			/>
-		);
+		log.debug('Initializing Parent');
+
 		this.framer.loadingIndicator = (
 			<div id={siteframe_loading_id} class="do-not-remove">
 				<div id="js8d">
@@ -45,20 +36,76 @@ export default class Parent {
 			</div>
 		);
 
-		document.body.append(this.framer.iframe, this.framer.loadingIndicator);
+		document.body.append(this.framer.loadingIndicator);
 
 		this.framer.addListeners({
+			click: this.handleClick.bind(this),
 			message: this.handleMessage.bind(this),
 			popstate: this.handlePopState.bind(this),
-			click: this.handleClick.bind(this),
 		});
 	}
 
+	handleClick(ev) {
+		let target = ev.target;
+		const linkLike = ':any-link[href],[data-cmls-href]';
+
+		if (!target) {
+			log.debug('No target!', { event: ev });
+			return;
+		}
+
+		// Ensure target is link-like
+		if (!target.matches(linkLike)) {
+			target = target.closest(linkLike);
+		}
+
+		if (!target) {
+			return;
+		}
+
+		const href = this.framer.getResolvedHref(target);
+
+		// Ignore empty links
+		if (!href?.length) {
+			log.debug('Click target destination is empty', { target, href });
+			return;
+		}
+
+		const url = this.framer.getUrlObject(href);
+
+		if (!url) {
+			log.debug('Click target destination generates malformed URL', {
+				target,
+				href,
+			});
+			return;
+		}
+
+		// Ignore cross-origin links
+		if (url.origin !== window.location.origin) {
+			log.debug('Passing through cross-origin link', { target, url });
+			return;
+		}
+
+		log.debug('Navigating to target destination', { target, href, url });
+		ev.preventDefault();
+		this.navigateTo(url);
+	}
+
+	navigateTo(url) {
+		url = this.framer.getUrlObject(url);
+		const currentState = history.state;
+		if (!currentState || currentState.url !== url.href) {
+			this.loadIframe(url);
+		}
+	}
+
 	clearBody() {
+		log.debug('Removing elements that do not specify .do-not-remove');
 		document.querySelectorAll('body > *').forEach((el) => {
 			if (
 				el.id === siteframe_id ||
-				el.classList.contains('do-not-remove')
+				el.className.includes('do-not-remove')
 			) {
 				return;
 			}
@@ -66,168 +113,120 @@ export default class Parent {
 		});
 	}
 
-	updateWindowState(state) {
-		if (this.isPopState) {
-			return;
-		}
+	loadIframe(url) {
+		url = this.framer.getUrlObject(url);
 
-		const { title = document.title, location = window.location.href } =
-			state;
+		this.framer.showLoading();
 
-		if (title !== document.title) {
-			log.debug('Updating parent title', {
-				was: document.title,
-				now: title,
+		if (!this.framer.iframe) {
+			log.debug('Generating iframe', url.href);
+			this.framer.iframe = (
+				<iframe
+					id={siteframe_id}
+					name={siteframe_id}
+					src={url.href}
+					loading="eager"
+					width="0"
+					height="0"
+					frameborder="0"
+					class="do-not-remove"
+					aria-hidden="false"
+					aria-label="Loading content..."
+				/>
+			);
+			document.body.append(this.framer.iframe);
+			this.framer.iframe.addEventListener('load', () => {
+				this.framer.iframe.contentWindow.addEventListener(
+					'error',
+					(e) => {
+						log.debug('Error!', e);
+						this.framer.hideLoading();
+					}
+				);
 			});
-			document.title = title;
+		} else {
+			const cw = this.framer.iframe.contentWindow;
+			if (!cw) {
+				log.error('Could not access iframe!');
+				throw new Error('Could not access iframe!');
+			}
+			log.debug('Replacing iframe url', url.href);
+			cw.location.replace(url);
+			//cw.location.href = url;
+			//this.framer.iframe.src = url;
+			cw.history.replaceState({}, '', url);
 		}
+	}
 
-		const url = this.framer.getUrlObject(location);
-		if (url?.href !== window.location.href) {
-			log.debug('Updating parent location', {
-				was: window.location.href,
-				now: url.href,
-			});
-			history.pushState(null, '', url.href);
+	pushHistory(url) {
+		url = this.framer.getUrlObject(url);
+		const currentState = history.state;
+		log.debug('Current state', Object.assign({}, currentState));
+		if (!currentState || currentState.url !== url.href) {
+			log.debug('Pushing new history state', url.href);
+			history.pushState({ url: url.href }, '', url);
 		}
+	}
+
+	replaceHistory(url) {
+		url = this.framer.getUrlObject(url);
+		log.debug('Replacing state', url.href);
+		history.replaceState({ url: url.href }, '', url);
 	}
 
 	handleMessage(ev) {
-		const classList = document.body.classList;
 		if (
-			ev.source !== this.framer.iframe?.contentWindow ||
-			ev.data?.message !== this.framer.messageKey
+			ev.source !== this.framer?.iframe?.contentWindow ||
+			ev.data?.message?.indexOf(this.framer.messageKey) !== 0
 		) {
-			return;
-		}
-
-		if (this.isPopState) {
-			classList.remove('iframe-loading');
-			return;
-		}
-
-		classList.remove('iframe-loading');
-		classList.add('iframe-loaded');
-
-		if (ev.data?.readystate === 'complete') {
-			this.framer.iframe.contentDocument.close();
-		}
-		this.updateWindowState({
-			title: ev.data?.title,
-			location: ev.data?.location,
-		});
-
-		this.clearBody();
-		this.useFrame = true;
-		this.isPopState = false;
-	}
-
-	handlePopState(ev) {
-		if (this.useFrame === false) {
-			log.debug('Not in frame yet, ignoring popstate', { event: ev });
-			return;
-		}
-
-		log.debug('Caught parent popstate', {
-			location: window.location.href,
-			event: ev,
-		});
-
-		this.isPopState = true;
-		this.updateChildLocation(window.location.href);
-	}
-
-	handleClick(ev) {
-		let target = ev.target;
-
-		// Ensure target is link-like
-		if (!target?.matches(':any-link[href],[data-href]')) {
-			target = target.closest(':any-link[href],[data-href]');
-		}
-
-		if (!target) {
-			log.debug('Click target is not actionable', target);
-			return;
-		}
-
-		const path = ev.composedPath();
-		if (!path.includes(target)) {
-			log.debug('Click target not in event path', {
-				target,
-				path,
+			log.debug('Ignoring message', {
+				sourceMatch: ev.source === this.framer?.iframe?.contentWindow,
+				messageKeyMatch:
+					ev.data?.message?.indexOf(this.framer.messageKey) === 0,
 				event: ev,
 			});
 			return;
 		}
 
-		const href = this.framer.getResolvedHref(target);
+		document.body.classList.add('iframe-loaded');
 
-		// ignore empty links
-		if (!href || !href.length) {
-			log.debug('Click target has an empty destination', {
-				target,
-				href,
-			});
-			return;
+		const msg = ev.data.message.substring(
+			this.framer.messageKey.length + 1
+		);
+		log.debug('Caught message', msg, ev.data);
+		switch (msg) {
+			case 'stateChange':
+				const { url = null, title = null } = ev.data;
+				if (url) {
+					this.framer.hideLoading();
+					if (this.wasPopState) {
+						this.wasPopState = false;
+					} else {
+						if (this.usingIframe) {
+							this.replaceHistory(url);
+						} else {
+							this.pushHistory(url);
+						}
+					}
+				}
+				if (title && title !== document.title) {
+					document.title = title;
+					this.framer.iframe.setAttribute('title', title);
+				}
+				break;
+			case 'showLoading':
+				this.framer.showLoading();
+				break;
 		}
-
-		const url = this.framer.getUrlObject(href);
-
-		if (!url) {
-			log.debug('Click target generates malformed URL', {
-				target,
-				href,
-				url,
-			});
-			return;
+		if (!this.usingIframe) {
+			this.usingIframe = true;
+			this.clearBody();
 		}
-
-		// Ignore cross-origin links
-		if (this.framer.isCrossOrigin(url)) {
-			log.debug('Passing through cross-origin link', { target, url });
-			return;
-		}
-
-		// Ignore hash links to the same page
-		if (this.framer.isSamePageHash(url)) {
-			log.debug('Ignoring same-page hash link.', { target, url });
-			return;
-		}
-
-		log.debug('Handing click target to iframe', {
-			href,
-			target,
-			event: ev,
-		});
-		ev.preventDefault();
-		this.updateChildLocation(url);
 	}
 
-	updateChildLocation(url) {
-		url = this.framer.getUrlObject(url);
-		if (this.framer.isCrossOrigin(url)) {
-			log.debug('Ignoring cross-origin link', url);
-			return;
-		}
-
-		this.framer.iframe.contentDocument.open();
-		this.framer.iframe.focus();
-		document.body.classList.add('iframe-loaded', 'iframe-loading');
-		const cdl = this.framer.iframe?.contentDocument?.location;
-		if (cdl) {
-			log.debug('Using CDL', this.framer.iframe);
-			if (this.framer.isSamePageHash(url, cdl)) {
-				cdl.hash = url.hash;
-			} else {
-				cdl.replace(url);
-			}
-		} else {
-			log.debug('Using iframe src', this.framer.iframe);
-			this.framer.iframe.src = url;
-		}
-		if (!this.useFrame) {
-			this.clearBody();
-			this.useFrame = true;
-		}
+	handlePopState(ev) {
+		log.debug('Caight popstate', ev, window.location.href);
+		this.wasPopState = true;
+		this.loadIframe(window.location.href);
 	}
 }

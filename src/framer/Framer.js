@@ -17,7 +17,9 @@ export class Framer {
 
 	patches = {};
 
-	messageKey = 'cmls_framer:updateLocation';
+	messageKey = 'cmls_framer';
+
+	loadingTimeout;
 
 	constructor() {
 		this.loadPatches();
@@ -80,15 +82,15 @@ export class Framer {
 	}
 
 	/**
-	 * A link-like may have an href or a data-href attribute added
-	 * by a patch. We will give data-hrefs preference.
+	 * A link-like may have an href or a data-cmls-href attribute added
+	 * by a patch. We will give data-cmls-hrefs preference.
 	 *
 	 * @param {HTMLElement} el
 	 * @returns {string|null}
 	 */
 	getResolvedHref(el) {
 		const href = el.getAttribute('href');
-		const dataHref = el.getAttribute('data-href');
+		const dataHref = el.getAttribute('data-cmls-href');
 		return dataHref || href || null;
 	}
 
@@ -109,7 +111,7 @@ export class Framer {
 		if (href instanceof URL) {
 			href = href.href;
 		}
-		return new URL(href, window.location.origin);
+		return new URL(href, window.location.origin + window.location.pathname);
 	}
 
 	/**
@@ -130,27 +132,32 @@ export class Framer {
 	 * @returns {boolean}
 	 */
 	isSamePageHash(url, origin = window.location) {
+		const urlObj = this.getUrlObject(url);
+
 		const currentUrlWithoutHash = this.getUrlWithoutHash(window.location);
-		const newUrlWithoutHash = this.getUrlWithoutHash(url);
+		const newUrlWithoutHash = this.getUrlWithoutHash(urlObj);
 		if (currentUrlWithoutHash !== newUrlWithoutHash) {
 			log.debug('URLs without hashes do not match', {
 				currentUrlWithoutHash,
 				newUrlWithoutHash,
+				url,
 			});
 			return false;
 		}
 
-		if (!url.href.includes('#') && !origin.href.includes('#')) {
+		if (!urlObj.href.includes('#') && !origin.href.includes('#')) {
 			log.debug('Same-page link without hashes', {
-				new: url.href,
+				new: urlObj.href,
 				current: origin.href,
 			});
 			return false;
 		}
 
 		log.debug('New location is a page hash link', {
-			new: url.href,
+			new: urlObj.href,
 			current: origin.href,
+			currentUrlWithoutHash,
+			newUrlWithoutHash,
 		});
 		return true;
 	}
@@ -162,6 +169,9 @@ export class Framer {
 	 * @returns {string}
 	 */
 	getUrlWithoutHash(url) {
+		/**
+		 * @type {URL}
+		 */
 		url = this.getUrlObject(url);
 		let search = url.search;
 		for (let p in this.patches) {
@@ -174,5 +184,24 @@ export class Framer {
 			}
 		}
 		return `${url.origin}${url.pathname}${search}`;
+	}
+
+	showLoading() {
+		log.debug('Showing loading');
+		document.body.classList.add('iframe-loading');
+		if (this.loadingTimeout) {
+			clearTimeout(this.loadingTimeout);
+			this.loadingTimeout = null;
+		}
+		this.loadingTimeout = setTimeout(this.hideLoading.bind(this), 10000);
+	}
+
+	hideLoading() {
+		log.debug('Hiding loading');
+		document.body.classList.remove('iframe-loading');
+		if (this.loadingTimeout) {
+			clearTimeout(this.loadingTimeout);
+			this.loadingTimeout = null;
+		}
 	}
 }

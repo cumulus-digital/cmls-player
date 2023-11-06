@@ -23,15 +23,15 @@ export default class CacheBuster {
 		const nodeName = el.nodeName?.toLowerCase();
 		if (!nodeName) return;
 
-		const href = el.href;
-		const dataHref = el.getAttribute('data-href');
+		const href = el.getAttribute('href');
+		const dataHref = el.getAttribute('data-cmls-href');
 		const val = el?.value;
 
 		let dest = dataHref || href;
 		if (dataHref) {
-			attr = 'data-href';
+			attr = 'data-cmls-href';
 		}
-		if (nodeName === 'option') {
+		if (val !== undefined) {
 			dest = val;
 			attr = 'value';
 		}
@@ -43,7 +43,7 @@ export default class CacheBuster {
 			const url = this.framer.getUrlObject(dest);
 			if (url.origin === window.location.origin) {
 				// skip in-page hashes
-				//if (this.parent.isSamePageHash(dest)) return;
+				if (this.framer.isSamePageHash(dest)) return;
 				url.searchParams.set('debug', true);
 				url.searchParams.set(
 					'cachebuster',
@@ -61,7 +61,7 @@ export default class CacheBuster {
 		}
 
 		const els = window.document.querySelectorAll(
-			':any-link[href], [data-href], select.selectnav option'
+			':any-link[href], [data-cmls-href], select.selectnav option'
 		);
 		if (els) {
 			els.forEach((el) => this.process(el));

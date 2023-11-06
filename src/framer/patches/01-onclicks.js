@@ -1,13 +1,13 @@
-/**
- * Finds elements with onclick attributes that attempt to load new
- * pages using window.location. The onclick attribute is removed, and
- * a data-href attribute is added with the intended URL.
- */
 import { Framer } from '../Framer';
 
 import Logger from 'Utils/Logger';
 const log = new Logger('Framer / Patch / AlterOnClicks');
 
+/**
+ * Finds elements with onclick attributes that attempt to load new
+ * pages using window.location. The onclick attribute is removed, and
+ * a data-cmls-href attribute is added with the intended URL.
+ */
 export default class AlterOnClicks {
 	/**
 	 * @type {Framer}
@@ -22,10 +22,6 @@ export default class AlterOnClicks {
 	}
 
 	init() {
-		if (this.framer.isChildWindow()) {
-			return;
-		}
-
 		const onclicks = window.document.querySelectorAll(
 			'[onclick*="window.location"]'
 		);
@@ -40,7 +36,8 @@ export default class AlterOnClicks {
 					if (url.length) {
 						const newHref = new URL(
 							url,
-							window.self.location.origin
+							window.self.location.origin +
+								window.location.pathname
 						);
 						if (
 							newHref &&
@@ -51,7 +48,7 @@ export default class AlterOnClicks {
 								url: newHref.href,
 							});
 							item.removeAttribute('onclick');
-							item.setAttribute('data-href', newHref);
+							item.setAttribute('data-cmls-href', newHref);
 						}
 					}
 				}
