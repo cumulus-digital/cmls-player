@@ -152,7 +152,12 @@ export default class Parent {
 			);
 			document.body.append(this.framer.iframe);
 			this.framer.iframe.addEventListener('load', () => {
-				this.framer.iframe.contentWindow.addEventListener(
+				const cw = this.framer.iframe?.contentWindow;
+				if (!cw) {
+					log.error('Could not access iframe!');
+					throw new Error('Could not access iframe!');
+				}
+				this.framer.iframe?.contentWindow.addEventListener(
 					'error',
 					(e) => {
 						log.debug('Error!', e);
@@ -264,14 +269,17 @@ export default class Parent {
 		if (window.location.href !== this.currentUrl) {
 			this.wasPopState = true;
 			const url = window.location.href;
+			this.loadIframe(url);
+			/*
 			//this.currentUrl = window.location.href;
-			const cw = this.framer.iframe.contentWindow;
+			const cw = this.framer.iframe?.contentWindow;
 			if (!cw) {
 				log.error('Could not access iframe!');
 				throw new Error('Could not access iframe!');
 			}
 			log.debug('Popstate replacing iframe url', url);
 			cw.location.replace(url);
+			*/
 		}
 	}
 }
