@@ -11,9 +11,11 @@ export const appSignals = {
 	background_color: signal('#e00'),
 	highlight_color: signal('#000'),
 	text_color: signal('#fff'),
+	default_button_height: signal('55px'),
 
 	offline_label: signal('Listen Live!'),
 	button_label: signal('Listen Live!'),
+	show_logo_without_artwork: signal(false),
 	show_cue_label: signal(true),
 	cue_label: signal(''),
 

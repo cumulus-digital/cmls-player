@@ -72,6 +72,21 @@ export default function ListenLiveButton(props) {
 					class="live-artwork"
 				/>
 			);
+		} else if (
+			status === stream_status.LIVE_PLAYING &&
+			playing &&
+			appState.show_logo_without_artwork.value &&
+			appState.current_station.logo
+		) {
+			return (
+				<Artwork
+					url={current_station.logo}
+					alt={`Logo for ${
+						current_station.name || current_station.mount
+					}`}
+					class="live-artwork station-logo"
+				/>
+			);
 		}
 	}, [status, playing, cuepoint]);
 
