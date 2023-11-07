@@ -115,7 +115,6 @@ export const searchItunes = (term) => {
 		lang: playerState.lang || 'en_us',
 		explicit: playerState.allow_explicit_covers || 'No',
 		version: 2,
-		_: Date.now(),
 	});
 	url.search = search.toString();
 
@@ -137,7 +136,7 @@ export const searchItunes = (term) => {
 				?.slice(10)
 				?.forEach((k) => artCache.delete(k));
 		}
-		log.debug('Making iTunes search request', { ...search });
+		log.debug('Making iTunes search request', url.search, artCache);
 		fetch(url.toString(), {
 			headers: {
 				'Content-Type': 'application/json',
