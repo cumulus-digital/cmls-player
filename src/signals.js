@@ -20,7 +20,9 @@ export const appSignals = {
 	button_width: signal(0),
 	button_height: signal(0),
 	button_top: signal(0),
+	button_offset_top: signal(0),
 	button_left: signal(0),
+	button_offset_left: signal(0),
 
 	dropdown_open: signal(false),
 	dropdown_position: signal(0),

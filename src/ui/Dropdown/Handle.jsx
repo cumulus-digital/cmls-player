@@ -26,10 +26,12 @@ export default forwardRef(function DropdownHandle(props, me) {
 
 	const handleKeyUp = (e) => {
 		const key = e.key;
+		console.log('KEY', { key, type: typeof key });
 
 		switch (key) {
 			case ' ':
 			case 'Enter':
+				// Toggle dropdown state
 				e.preventDefault();
 				e.stopPropagation();
 				appState.dropdown_open.value = !appState.dropdown_open.value;
@@ -39,7 +41,8 @@ export default forwardRef(function DropdownHandle(props, me) {
 				break;
 			case 'ArrowDown':
 			case 'Down':
-				e.stopPropagation();
+				e.preventDefault();
+				e.stopImmediatePropagation();
 				appState.dropdown_open.value = true;
 				if (appState.dropdown_open.value) {
 					appState.dropdown_focus_station.value = 0;
@@ -48,7 +51,8 @@ export default forwardRef(function DropdownHandle(props, me) {
 
 			case 'Up':
 			case 'ArrowUp':
-				e.stopPropagation();
+				e.preventDefault();
+				e.stopImmediatePropagation();
 				appState.dropdown_open.value = false;
 				break;
 		}

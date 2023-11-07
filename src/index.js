@@ -160,7 +160,7 @@ window.customElements.define(
 							firstStation = mount;
 						}
 
-						newStations[mount] = Object.assign({}, station);
+						newStations[mount] = Object.assign({}, new_station);
 					});
 				}
 
@@ -210,6 +210,8 @@ window.customElements.define(
 			window.addEventListener('keyup', (e) => {
 				const key = e.key;
 				if (key === 'Esc' || key === 'Escape') {
+					e.preventDefault();
+					e.stopImmediatePropagation();
 					appSignals.dropdown_open.value = false;
 				}
 			});
@@ -237,7 +239,9 @@ function CmlsPlayerProvider(props) {
 			`--text_color: ${appSignals.text_color}`,
 
 			`--button_top: ${appSignals.button_top}px`,
+			`--button_offset_top: ${appSignals.button_offset_top}px`,
 			`--button_left: ${appSignals.button_left}px`,
+			`--button_offset_left: ${appSignals.button_offset_left}px`,
 			`--button_height: ${appSignals.button_height}px`,
 			`--button_width: ${appSignals.button_width}px`,
 		];

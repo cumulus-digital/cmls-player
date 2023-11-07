@@ -55,10 +55,12 @@ export default function ListenLive(props) {
 			const me = containerRef.current;
 			if (me) {
 				const box = me.getBoundingClientRect();
-				appState.button_top.value = me.offsetTop;
+				appState.button_top.value = box.top;
+				appState.button_offset_top.value = me.offsetTop;
 				appState.button_left.value = box.left;
+				appState.button_offset_left.value = me.offsetLeft;
 				appState.button_width.value = box.width;
-				appState.button_height.value = me.offsetHeight;
+				appState.button_height.value = box.height;
 				/*
 				appState.button_top.value = me.offsetTop;
 				appState.button_left.value = me.offsetLeft;

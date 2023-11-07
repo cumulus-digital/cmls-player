@@ -1,4 +1,4 @@
-import { h } from 'preact';
+import { h, Fragment } from 'preact';
 import { useEffect, useContext } from 'preact/hooks';
 import { forwardRef } from 'preact/compat';
 import { shallowEqual, useSelector } from 'react-redux';
@@ -41,7 +41,7 @@ export default forwardRef(function DropdownContainer(props, ref) {
 
 			const buttonCenterOffset = clientWidth / 2 - buttonCenter;
 
-			if (buttonCenterOffset <= 4 && buttonCenterOffset >= -4) {
+			if (buttonCenterOffset <= 5 && buttonCenterOffset >= -5) {
 				position = 'align-center';
 			} else if (myWidth + appState.button_left.value > clientWidth) {
 				position = 'align-right';
@@ -87,13 +87,15 @@ export default forwardRef(function DropdownContainer(props, ref) {
 		switch (key) {
 			case 'Down':
 			case 'ArrowDown':
-				e.stopPropagation();
+				e.preventDefault();
+				e.stopImmediatePropagation();
 				focusNextStation();
 				break;
 
 			case 'Up':
 			case 'ArrowUp':
-				e.stopPropagation();
+				e.preventDefault();
+				e.stopImmediatePropagation();
 				focusPreviousStation();
 				break;
 
@@ -111,7 +113,10 @@ export default forwardRef(function DropdownContainer(props, ref) {
 	 * @returns {array}
 	 */
 	const stationsOutput = useMemo(() => {
-		return Object.values(stations)
+		if (!appState.dropdown_open.value) {
+			return <></>;
+		}
+		const StationComponents = Object.values(stations)
 			?.sort((a, b) => {
 				// Primary is first
 				if (a.primary && !b.primary) return -1;
@@ -123,6 +128,7 @@ export default forwardRef(function DropdownContainer(props, ref) {
 			.map((station, index) => (
 				<Station
 					{...station}
+					key={station.mount}
 					focus={
 						appState.dropdown_focus_station.value === index
 							? true
@@ -130,7 +136,12 @@ export default forwardRef(function DropdownContainer(props, ref) {
 					}
 				/>
 			));
-	}, [stations, appState.dropdown_focus_station.value]);
+		return StationComponents;
+	}, [
+		stations,
+		appState.dropdown_open.value,
+		appState.dropdown_focus_station.value,
+	]);
 
 	return (
 		<div

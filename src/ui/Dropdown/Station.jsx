@@ -107,6 +107,7 @@ export default function DropdownStation(props) {
 
 	return (
 		<button
+			key={props?.key || props?.mount}
 			ref={me}
 			class={classname}
 			role="menuitem"
