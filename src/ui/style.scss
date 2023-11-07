@@ -12,11 +12,10 @@
 	}
 
 	--font_size: 13.25px;
-	/*
-	--highlight_color: var(--highlight_color, #000);
-	--background_color: var(--background_color, #e00);
-	--text_color: var(--text_color, #fff);
-	*/
+	--internal_highlight_color: var(--highlight_color, #000);
+	--internal_background_color: var(--background_color, #e00);
+	--internal_text_color: var(--text_color, #fff);
+	--internal_default_button_height: var(--default_button_height, 55px);
 }
 
 h1,
@@ -72,7 +71,7 @@ button {
 
 	display: inline-flex;
 
-	background-color: var(--background_color);
+	background-color: var(--internal_background_color);
 	background-image: linear-gradient(
 		-20deg,
 		rgba(0, 0, 0, 0.1) 20%,
@@ -81,14 +80,16 @@ button {
 	);
 	background-image: linear-gradient(
 		-20deg,
-		color-mix(in srgb, var(--highlight_color) 10%, transparent) 20%,
+		color-mix(in srgb, var(--internal_highlight_color) 10%, transparent) 20%,
 		transparent 40%,
-		color-mix(in srgb, var(--highlight_color) 20%, transparent) 100%
+		color-mix(in srgb, var(--internal_highlight_color) 20%, transparent)
+			100%
 	);
-	color: var(--text_color);
+	color: var(--internal_text_color);
 
 	border: 1px outset rgba(255, 255, 255, 0.1);
-	border: 1px outset color-mix(in srgb, var(--text_color) 10%, transparent);
+	border: 1px outset
+		color-mix(in srgb, var(--internal_text_color) 10%, transparent);
 	border-radius: 3px;
 	overflow: visible;
 
@@ -126,7 +127,7 @@ button {
 	min-width: 200px;
 	max-width: 180px;
 
-	height: 55px;
+	height: var(--internal_default_button_height);
 	max-height: 100%;
 
 	padding: 5px;
@@ -150,7 +151,7 @@ button {
 		z-index: 0;
 		left: 0;
 		top: 0;
-		background-color: var(--highlight_color);
+		background-color: var(--internal_highlight_color);
 		opacity: 0;
 		transition: opacity 0.2s;
 	}
@@ -163,11 +164,12 @@ button {
 }
 
 .live-artwork {
+	background: #000;
 	position: absolute;
 	top: 50%;
 	left: 4px;
 	transform: translate3d(0, -50%, 0);
-	width: auto;
+	width: calc(var(--button_height) - 10px);
 	height: calc(var(--button_height) - 10px);
 	z-index: 2;
 	opacity: 1;
@@ -267,9 +269,9 @@ button {
 			top: -10%;
 			//transform: translate(-50%, -50%);
 
-			border-top: 3px solid var(--text_color);
+			border-top: 3px solid var(--internal_text_color);
 			border-right: 2px solid transparent;
-			border-left: 2px dotted var(--text_color);
+			border-left: 2px dotted var(--internal_text_color);
 			border-radius: 50%;
 
 			opacity: 0.5;
@@ -384,7 +386,7 @@ button {
 
 	border-left: 2px groove rgba(255, 255, 255, 0.3);
 	border-left: 2px groove
-		color-mix(in srgb, var(--text_color) 30%, transparent);
+		color-mix(in srgb, var(--internal_text_color) 30%, transparent);
 
 	position: relative;
 	z-index: 2;
@@ -412,7 +414,7 @@ button {
 		left: 0;
 		top: 0;
 		z-index: -1;
-		background-color: var(--highlight_color);
+		background-color: var(--internal_highlight_color);
 		opacity: 0.15;
 		transition: opacity 0.2s;
 	}
@@ -457,7 +459,7 @@ button {
 }
 
 .dropdown-inner {
-	background-color: var(--background_color);
+	background-color: var(--internal_background_color);
 	background-image: linear-gradient(
 		10deg,
 		rgba(0, 0, 0, 0.2) 20%,
@@ -466,9 +468,10 @@ button {
 	);
 	background-image: linear-gradient(
 		10deg,
-		color-mix(in srgb, var(--highlight_color) 20%, transparent) 20%,
-		color-mix(in srgb, var(--highlight_color) 15%, transparent) 40%,
-		color-mix(in srgb, var(--highlight_color) 30%, transparent) 100%
+		color-mix(in srgb, var(--internal_highlight_color) 20%, transparent) 20%,
+		color-mix(in srgb, var(--internal_highlight_color) 15%, transparent) 40%,
+		color-mix(in srgb, var(--internal_highlight_color) 30%, transparent)
+			100%
 	);
 
 	&::after {
@@ -525,7 +528,7 @@ button {
 
 	border-bottom: 2px groove rgba(255, 255, 255, 0.4);
 	border-bottom: 2px groove
-		color-mix(in srgb, var(--text_color) 40%, transparent);
+		color-mix(in srgb, var(--internal_text_color) 40%, transparent);
 	&:last-child {
 		border-bottom: 0;
 	}
@@ -544,7 +547,7 @@ button {
 		z-index: -1;
 		left: 0;
 		top: 0;
-		background-color: var(--highlight_color);
+		background-color: var(--internal_highlight_color);
 		opacity: 0;
 		//transition: opacity 0.1s;
 	}
@@ -627,7 +630,7 @@ button {
 		background-color: rgba(0, 0, 0, 0.6);
 		background-color: color-mix(
 			in srgb,
-			var(--highlight_color) 50%,
+			var(--internal_highlight_color) 50%,
 			transparent
 		);
 		padding: 0.4em; //calc(var(--fontSize) * 0.4);
@@ -775,7 +778,7 @@ button {
 	background-image: linear-gradient(
 		80deg,
 		transparent 0%,
-		var(--background_color) 100%
+		var(--internal_background_color) 100%
 	);
 	width: var(--toSize);
 	height: var(--toSize);
