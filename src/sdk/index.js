@@ -100,6 +100,8 @@ export class SDK {
 		if (isParentWindow()) {
 			// Handle requests from children
 			window.addEventListener('message', (e) => {
+				if (e.origin !== window.location.origin) return;
+
 				const data = e?.data;
 				if (!data?.action) return;
 

@@ -14,7 +14,10 @@ export default class Parent {
 	 */
 	framer;
 
-	usingIframe = false;
+	currentUrl = window.location.href;
+
+	firstIframeLoad = false;
+	ignoreNextPopState = false;
 
 	constructor(framer) {
 		this.framer = framer;
@@ -63,41 +66,54 @@ export default class Parent {
 			return;
 		}
 
-		const href = this.framer.getResolvedHref(target);
+		try {
+			const url = this.framer.testLink(
+				this.framer.getResolvedHref(target)
+			);
 
-		// Ignore empty links
-		if (!href?.length) {
-			log.debug('Click target destination is empty', { target, href });
-			return;
+			log.debug('Navigating to target destination', { target, url });
+			ev.preventDefault();
+			this.navigateTo(url);
+		} catch (e) {
+			if (e instanceof this.framer.linkErrors.SAME_PAGE_HASH) {
+				log.debug('Handling same-page hash', {
+					target,
+					error: e.message,
+				});
+
+				ev.preventDefault();
+
+				// Hash changes cause a popstate, we need to ignore it
+				this.ignoreNextPopState = true;
+				const oldHref = window.location.href;
+				window.location.hash = e.message;
+				history.replaceState(
+					{ url: oldHref },
+					'',
+					window.location.href
+				);
+			} else {
+				log.debug('Passing through target', {
+					target,
+					error: e.message,
+				});
+			}
 		}
-
-		const url = this.framer.getUrlObject(href);
-
-		if (!url) {
-			log.debug('Click target destination generates malformed URL', {
-				target,
-				href,
-			});
-			return;
-		}
-
-		// Ignore cross-origin links
-		if (url.origin !== window.location.origin) {
-			log.debug('Passing through cross-origin link', { target, url });
-			return;
-		}
-
-		log.debug('Navigating to target destination', { target, href, url });
-		ev.preventDefault();
-		this.navigateTo(url);
 	}
 
 	navigateTo(url) {
 		url = this.framer.getUrlObject(url);
+		if (this.currentUrl !== url.href) {
+			log.debug('navigateTo', url.href);
+			this.loadIframe(url);
+			//this.currentUrl = url.href;
+		}
+		/*
 		const currentState = history.state;
 		if (!currentState || currentState.url !== url.href) {
 			this.loadIframe(url);
 		}
+		*/
 	}
 
 	clearBody() {
@@ -160,11 +176,13 @@ export default class Parent {
 
 	pushHistory(url) {
 		url = this.framer.getUrlObject(url);
-		const currentState = history.state;
-		log.debug('Current state', Object.assign({}, currentState));
-		if (!currentState || currentState.url !== url.href) {
-			log.debug('Pushing new history state', url.href);
-			history.pushState({ url: url.href }, '', url);
+		if (url.href !== this.currentUrl) {
+			const currentState = history.state;
+			log.debug('Current state', Object.assign({}, currentState));
+			if (!currentState || currentState.url !== url.href) {
+				log.debug('Pushing new history state', url.href);
+				history.pushState({ url: url.href }, '', url);
+			}
 		}
 	}
 
@@ -199,15 +217,23 @@ export default class Parent {
 				const { url = null, title = null } = ev.data;
 				if (url) {
 					this.framer.hideLoading();
+
+					// Don't alter history for popstate changes
 					if (this.wasPopState) {
 						this.wasPopState = false;
 					} else {
-						if (this.usingIframe) {
+						if (this.firstIframeLoad) {
 							this.replaceHistory(url);
 						} else {
 							this.pushHistory(url);
 						}
+
+						if (!this.firstIframeLoad) {
+							this.firstIframeLoad = true;
+							this.clearBody();
+						}
 					}
+					this.currentUrl = url;
 				}
 				if (title && title !== document.title) {
 					document.title = title;
@@ -217,16 +243,35 @@ export default class Parent {
 			case 'showLoading':
 				this.framer.showLoading();
 				break;
-		}
-		if (!this.usingIframe) {
-			this.usingIframe = true;
-			this.clearBody();
+			case 'hideLoading':
+				this.framer.hideLoading();
+				break;
 		}
 	}
 
 	handlePopState(ev) {
-		log.debug('Caight popstate', ev, window.location.href);
-		this.wasPopState = true;
-		this.loadIframe(window.location.href);
+		if (this.ignoreNextPopState) {
+			log.debug('Ignoring popstate', { event: ev });
+			this.ignoreNextPopState = false;
+			return;
+		}
+
+		log.debug('Caight popstate', {
+			event: ev,
+			wlh: window.location.href,
+			currentUrl: this.currentUrl,
+		});
+		if (window.location.href !== this.currentUrl) {
+			this.wasPopState = true;
+			const url = window.location.href;
+			//this.currentUrl = window.location.href;
+			const cw = this.framer.iframe.contentWindow;
+			if (!cw) {
+				log.error('Could not access iframe!');
+				throw new Error('Could not access iframe!');
+			}
+			log.debug('Popstate replacing iframe url', url);
+			cw.location.replace(url);
+		}
 	}
 }

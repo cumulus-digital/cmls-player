@@ -40,11 +40,9 @@ export default class Child {
 					'readystatechange',
 					this.onStateChange.bind(this)
 				);
-				/*
 				window.parent.postMessage({
 					message: `${this.framer.messageKey}:showLoading`,
 				});
-				*/
 			},
 		});
 		if (!this.titleObserver) {
@@ -59,6 +57,9 @@ export default class Child {
 			});
 		}
 
+		window.parent.postMessage({
+			message: `${this.framer.messageKey}:hideLoading`,
+		});
 		this.sendFullState();
 		this.ready = true;
 	}
@@ -96,6 +97,32 @@ export default class Child {
 		if (!target) {
 			return;
 		}
+
+		try {
+			const url = this.framer.testLink(
+				this.framer.getResolvedHref(target)
+			);
+
+			// Handle data-cmls-href
+			if (target.getAttribute('data-cmls-href')) {
+				ev.preventDefault();
+				window.location.href = url.href;
+			}
+
+			// Anything else gets passed through
+		} catch (e) {
+			if (e instanceof this.framer.linkErrors.CROSS_ORIGIN) {
+				if (!target.target || target.target === '_self') {
+					log.debug(
+						'Setting cross-origin link target to parent',
+						target
+					);
+					target.target = '_parent';
+				}
+			}
+		}
+
+		return;
 
 		const href = this.framer.getResolvedHref(target);
 

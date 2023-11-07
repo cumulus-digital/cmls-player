@@ -10,8 +10,9 @@ body {
 
 	##{$siteframe_loading_id} {
 		display: flex;
+		flex-direction: column;
 		flex-wrap: wrap;
-		align-content: center;
+		align-items: center;
 		justify-content: center;
 		background-color: rgba(0, 0, 0, 0.7);
 		backdrop-filter: blur(2px);
@@ -25,17 +26,26 @@ body {
 		z-index: 999998;
 		transition: opacity 0.15s, width 0s 0s, height 0s 0s;
 
+		&::after {
+			content: "Loading…";
+			color: #fff;
+			font-size: 12.5px;
+			text-align: center;
+			margin-top: 0.5em;
+			padding-left: 1em;
+		}
+
 		#js8d {
 			position: relative;
 			height: 25px;
-			width: 40px;
+			width: 46px;
 			display: flex;
 			justify-content: space-between;
 			transform: rotate(180deg);
 
 			div {
 				background: #fff;
-				width: 5px;
+				width: 6px;
 				animation: sound 0ms -800ms linear infinite alternate;
 
 				@for $i from 1 through 5 {

@@ -2,6 +2,13 @@ import domReady from 'Utils/domReady';
 import Child from './Child';
 import Parent from './Parent';
 
+import {
+	EmptyLinkError,
+	MalformedLinkError,
+	CrossOriginLinkError,
+	SamePageHashLinkError,
+} from './LinkError';
+
 import config from 'Config';
 const { siteframe_id } = config;
 
@@ -20,6 +27,13 @@ export class Framer {
 	messageKey = 'cmls_framer';
 
 	loadingTimeout;
+
+	linkErrors = {
+		EMPTY: EmptyLinkError,
+		MALFORMED: MalformedLinkError,
+		CROSS_ORIGIN: CrossOriginLinkError,
+		SAME_PAGE_HASH: SamePageHashLinkError,
+	};
 
 	constructor() {
 		this.loadPatches();
@@ -203,5 +217,36 @@ export class Framer {
 			clearTimeout(this.loadingTimeout);
 			this.loadingTimeout = null;
 		}
+	}
+
+	testLink(link, origin = window.location.origin) {
+		if (!link?.length) {
+			log.debug('Target destination is empty', { link });
+			throw new this.linkErrors.EMPTY();
+		}
+
+		const url = this.getUrlObject(link);
+
+		if (!url) {
+			log.debug('Target destination generates malformed URL', {
+				link,
+				url,
+			});
+			throw new this.linkErrors.MALFORMED();
+		}
+
+		if (url.origin !== origin) {
+			log.debug('Target destination is a different origin', {
+				link,
+				url,
+			});
+			throw new this.linkErrors.CROSS_ORIGIN(url.href);
+		}
+
+		if (this.isSamePageHash(url)) {
+			throw new this.linkErrors.SAME_PAGE_HASH(url.hash);
+		}
+
+		return url;
 	}
 }
