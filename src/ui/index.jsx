@@ -54,12 +54,19 @@ export default function ListenLive(props) {
 		const watcher = setInterval(() => {
 			const me = containerRef.current;
 			if (me) {
+				const box = me.getBoundingClientRect();
+				appState.button_top.value = me.offsetTop;
+				appState.button_left.value = box.left;
+				appState.button_width.value = box.width;
+				appState.button_height.value = me.offsetHeight;
+				/*
 				appState.button_top.value = me.offsetTop;
 				appState.button_left.value = me.offsetLeft;
 				appState.button_width.value = me.offsetWidth;
 				appState.button_height.value = me.offsetHeight;
+				*/
 			}
-		}, 200);
+		}, 300);
 
 		return () => {
 			clearInterval(watcher);

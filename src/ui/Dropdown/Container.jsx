@@ -37,14 +37,14 @@ export default forwardRef(function DropdownContainer(props, ref) {
 			const myWidth = me.offsetWidth;
 
 			const buttonCenter =
-				appState.button_left.value + appState.button_width.value / 2;
+				appState.button_width.value / 2 + appState.button_left.value;
 
-			const buttonCenterOffset = buttonCenter - clientWidth / 2;
+			const buttonCenterOffset = clientWidth / 2 - buttonCenter;
 
-			if (myWidth + appState.button_left.value > clientWidth) {
-				position = 'align-right';
-			} else if (buttonCenterOffset <= 4 && buttonCenterOffset >= -4) {
+			if (buttonCenterOffset <= 4 && buttonCenterOffset >= -4) {
 				position = 'align-center';
+			} else if (myWidth + appState.button_left.value > clientWidth) {
+				position = 'align-right';
 			}
 		}
 
