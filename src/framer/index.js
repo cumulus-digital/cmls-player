@@ -14,4 +14,4 @@ import(
 
 const framer = new Framer();
 window.cmls_player = window.cmls_player || {};
-window.cmls_player.updateLocation = framer.updateLocation;
+window.cmls_player.updateLocation = framer.updateLocation.bind(framer);

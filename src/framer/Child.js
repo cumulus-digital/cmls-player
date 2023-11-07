@@ -27,23 +27,21 @@ export default class Child {
 
 		log.debug('Initializing Child');
 
-		document.addEventListener(
-			'readystatechange',
-			this.onStateChange.bind(this),
-			{ once: true }
-		);
+		this.framer.addListeners({
+			readystatechange: this.onStateChange.bind(this),
+			DOMContentLoaded: () => {
+				if (window.location.hash) {
+					const hashEl = document.querySelector(window.location.hash);
+					if (hashEl) {
+						hashEl.scrollIntoView();
+					}
+				}
+			},
+		});
+
 		this.framer.addListeners({
 			hashchange: this.sendFullState.bind(this),
 			click: this.handleClick.bind(this),
-			beforeunload: () => {
-				document.removeEventListener(
-					'readystatechange',
-					this.onStateChange.bind(this)
-				);
-				window.parent.postMessage({
-					message: `${this.framer.messageKey}:showLoading`,
-				});
-			},
 		});
 		if (!this.titleObserver) {
 			const title = document.querySelector('head title');

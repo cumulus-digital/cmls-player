@@ -132,51 +132,84 @@ export default class Parent {
 	loadIframe(url) {
 		url = this.framer.getUrlObject(url);
 
+		if (this.framer.isCrossOrigin(url)) {
+			log.error(
+				'Attempted to iframe cross-origin URL, directing to main window.',
+				url.href
+			);
+			window.location.href = url;
+			return;
+		}
+
 		this.framer.showLoading();
 
-		if (!this.framer.iframe) {
-			log.debug('Generating iframe', url.href);
-			this.framer.iframe = (
-				<iframe
-					id={siteframe_id}
-					name={siteframe_id}
-					src={url.href}
-					loading="eager"
-					width="0"
-					height="0"
-					frameborder="0"
-					class="do-not-remove"
-					aria-hidden="false"
-					aria-label="Loading content..."
-				/>
-			);
-			document.body.append(this.framer.iframe);
-			this.framer.iframe.addEventListener('load', () => {
-				const cw = this.framer.iframe?.contentWindow;
-				if (!cw) {
-					log.error('Could not access iframe!');
-					throw new Error('Could not access iframe!');
+		fetch(url, { method: 'HEAD' })
+			.then((response) => {
+				log.debug('Child fetch', response);
+
+				const newUrl = this.framer.getUrlObject(response?.url || url);
+
+				if (this.framer.isCrossOrigin(newUrl)) {
+					log.error(
+						'Attempted to iframe cross-origin URL, loading in main window.',
+						newUrl.href
+					);
+					window.location.href = newUrl;
+					return;
 				}
-				this.framer.iframe?.contentWindow.addEventListener(
-					'error',
-					(e) => {
-						log.debug('Error!', e);
-						this.framer.hideLoading();
+
+				if (!document.body.classList.contains('iframe-loaded')) {
+					this.clearBody();
+					document.body.classList.add('iframe-loaded');
+				}
+				this.framer.hideLoading();
+
+				if (!this.framer.iframe) {
+					log.debug('Generating child', newUrl);
+
+					this.framer.iframe = (
+						<iframe
+							id={siteframe_id}
+							name={siteframe_id}
+							src={newUrl}
+							loading="eager"
+							width="0"
+							height="0"
+							frameborder="0"
+							class="do-not-remove"
+							aria-hidden="false"
+							aria-label="Loading content..."
+						/>
+					);
+
+					document.body.append(this.framer.iframe);
+					this.framer.iframe.focus();
+
+					this.framer.emit('cmls-player-iframe-created', {
+						id: siteframe_id,
+					});
+				} else {
+					const cw = this.framer.iframe.contentWindow;
+					if (!cw) {
+						log.error('Could not access child window!');
+						throw new Error('Could not access child window!');
 					}
-				);
+					log.debug('Replacing child location', newUrl.href);
+					this.framer.iframe.src = newUrl;
+					cw.location.replace(newUrl);
+					cw.history.replaceState({}, '', newUrl);
+				}
+			})
+			.catch((reason) => {
+				log.error('Child fetch error, loading URL in main window', {
+					url,
+					reason,
+				});
+				window.location.href = url;
+				throw reason;
 			});
-		} else {
-			const cw = this.framer.iframe.contentWindow;
-			if (!cw) {
-				log.error('Could not access iframe!');
-				throw new Error('Could not access iframe!');
-			}
-			log.debug('Replacing iframe url', url.href);
-			cw.location.replace(url);
-			//cw.location.href = url;
-			//this.framer.iframe.src = url;
-			cw.history.replaceState({}, '', url);
-		}
+
+		return;
 	}
 
 	pushHistory(url) {
@@ -219,6 +252,8 @@ export default class Parent {
 		log.debug('Caught message', msg, ev.data);
 		switch (msg) {
 			case 'stateChange':
+				this.framer.emit('cmls-player-iframe-state', ev.data);
+
 				const { url = null, title = null } = ev.data;
 				if (url) {
 					this.framer.hideLoading();
@@ -243,6 +278,7 @@ export default class Parent {
 				if (title && title !== document.title) {
 					document.title = title;
 					this.framer.iframe.setAttribute('title', title);
+					this.framer.iframe.setAttribute('aria-label', title);
 				}
 				break;
 			case 'showLoading':

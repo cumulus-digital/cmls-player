@@ -249,4 +249,53 @@ export class Framer {
 
 		return url;
 	}
+
+	emit(name, data) {
+		const ev = new CustomEvent(name, {
+			detail: data,
+		});
+		window.dispatchEvent(ev);
+	}
+
+	updateLocation(newUrl) {
+		log.debug('Caught updateLocation call', newUrl);
+
+		try {
+			const url = this.testLink(newUrl);
+
+			log.debug('Using location', url.href);
+			if (this.isChildWindow()) {
+				window.self.location.href = url;
+			} else {
+				this.parent.navigateTo(url);
+			}
+		} catch (e) {
+			if (e instanceof this.linkErrors.CROSS_ORIGIN) {
+				if (this.isChildWindow()) {
+					window.parent.location.href = newUrl;
+				} else {
+					this.parent.navigateTo(newUrl);
+				}
+				return;
+			}
+			if (e instanceof this.linkErrors.SAME_PAGE_HASH) {
+				log.debug('Same page hash!');
+				const url = this.getUrlObject(newUrl);
+				if (this.isChildWindow()) {
+					window.self.location.hash = url.hash;
+				} else {
+					if (this.iframe) {
+						log.debug('Passing same-page hash to child');
+						this.parent.navigateTo(url);
+					} else {
+						log.debug('Updating parent location hash');
+						window.self.location.hash = url.hash;
+					}
+				}
+				return;
+			}
+			log.error('Failed to update location', e);
+			throw e;
+		}
+	}
 }
