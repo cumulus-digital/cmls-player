@@ -125,6 +125,7 @@ window.customElements.define(
 							child.attributes
 						);
 						let {
+							//station,
 							mount,
 							name = '',
 							tagline = '',
@@ -140,7 +141,8 @@ window.customElements.define(
 						// a standalone attribute will be an empty string
 						primary = primary === false ? false : true;
 
-						const station = new Station({
+						const new_station = new Station({
+							//station,
 							mount,
 							name,
 							tagline,

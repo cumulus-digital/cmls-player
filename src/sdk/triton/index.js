@@ -75,7 +75,8 @@ export default class TritonSDK {
 			(mod) => mod.id == 'MediaPlayer'
 		).playerId = `${config.mediaplayer_id_prefix}-${this.mediaPlayerId}`;
 
-		const player = this.setPlayer(new window.TDSdk(tdPlayerConfig));
+		window.cmls_player_tdsdk = new window.TDSdk(tdPlayerConfig);
+		const player = this.setPlayer(window.cmls_player_tdsdk);
 		this.player = player;
 
 		this.modules.MediaPlayer = new MediaPlayer(this);

@@ -1,4 +1,5 @@
 export class Station {
+	station;
 	mount;
 	name;
 	tagline;
@@ -14,6 +15,7 @@ export class Station {
 	/**
 	 *
 	 * @param {object} conf
+	 * @param {string} conf.station
 	 * @param {string} conf.mount
 	 * @param {string?} conf.name
 	 * @param {string?} conf.tagline
@@ -30,8 +32,19 @@ export class Station {
 			}
 		}
 
-		if (!this.mount) {
-			throw new Error('Station must have a mount.', this);
+		if (!this.station && !this.mount) {
+			throw new Error(
+				'Station must have a station or mount attribute.',
+				this
+			);
 		}
+	}
+
+	static stationToMount(station, type = 'AAC') {
+		return station + 'AAC';
+	}
+
+	static mountToStation(station) {
+		return station.replace(/AAC$/, '');
 	}
 }
