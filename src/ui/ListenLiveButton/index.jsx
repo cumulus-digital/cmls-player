@@ -76,7 +76,7 @@ export default function ListenLiveButton(props) {
 			status === stream_status.LIVE_PLAYING &&
 			playing &&
 			appState.show_logo_without_artwork.value &&
-			appState.current_station.logo
+			current_station.logo
 		) {
 			return (
 				<Artwork
