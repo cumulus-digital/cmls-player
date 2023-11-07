@@ -38,6 +38,15 @@ import(
 });
 
 window.customElements.define(
+	'cmls-station',
+	class extends HTMLElement {
+		constructor() {
+			super();
+		}
+	}
+);
+
+window.customElements.define(
 	'cmls-player',
 	class extends HTMLElement {
 		stations;
@@ -54,6 +63,15 @@ window.customElements.define(
 
 		constructor() {
 			super();
+
+			const children = Array.from(this.childNodes);
+
+			if (!this.getElementsByTagName('cmls-station')?.length) {
+				throw new Error(
+					'One or more cmls-station tags must be defined.'
+				);
+			}
+
 			this.onMutation = this.registerComponent.bind(this);
 		}
 
@@ -73,7 +91,9 @@ window.customElements.define(
 			const dispatch = store.dispatch;
 
 			const props = this.parseAttributes(this.attributes);
-			const children = Array.from(this.childNodes);
+			const children = Array.from(
+				this.getElementsByTagName('cmls-station')
+			);
 
 			log.debug('Parsing markup config', { props, children });
 
@@ -82,6 +102,14 @@ window.customElements.define(
 
 			if (props?.['offline-label'] !== undefined) {
 				appSignals.offline_label.value = props['offline-label'];
+			}
+
+			if (
+				props?.['show-logo-without-artwork'] !== undefined &&
+				String(props?.['show-logo-without-artwork']).toLowerCase() ===
+					'true'
+			) {
+				appSignals.show_logo_without_artwork.value = true;
 			}
 
 			if (props?.['no-cue-label'] !== undefined) {
@@ -96,6 +124,9 @@ window.customElements.define(
 			}
 			if (props?.['text-color'] !== undefined) {
 				appSignals.text_color.value = props['text-color'];
+			}
+			if (props?.['button-height'] !== undefined) {
+				appSignals.default_button_height.value = props['button-height'];
 			}
 
 			batch(() => {
@@ -118,7 +149,7 @@ window.customElements.define(
 				let firstStation = null;
 				if (children) {
 					children.forEach((child, i) => {
-						if (child?.nodeName?.toLowerCase() !== 'station')
+						if (child?.nodeName?.toLowerCase() !== 'cmls-station')
 							return;
 
 						const childProps = this.parseAttributes(
@@ -237,6 +268,7 @@ function CmlsPlayerProvider(props) {
 			`--background_color: ${appSignals.background_color}`,
 			`--highlight_color: ${appSignals.highlight_color}`,
 			`--text_color: ${appSignals.text_color}`,
+			`--default_button_height: ${appSignals.default_button_height}`,
 
 			`--button_top: ${appSignals.button_top}px`,
 			`--button_offset_top: ${appSignals.button_offset_top}px`,
