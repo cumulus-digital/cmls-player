@@ -8,6 +8,8 @@ UI: A preact-based user interface for controlling the player. Configuration is a
 
 SDK: An interface for a streaming player SDK. Currently only supports the Triton Digital Javascript API.
 
+Interplay and state between the SDK and UI is synchronized across windows through a customization of [redux-state-sync](https://github.com/aohua/redux-state-sync), using pubkey's [Broadcast Channel](https://github.com/pubkey/broadcast-channel) library.
+
 Framer: Allows the SDK interface to survive navigation around the website by containing the site within an iframe. Upon a normal initial page load, Framer listens for click events to intercept. When intercepted, an iframe (the "Child") is generated to contain the next pageload, and all existing top-level page elements lacking a "do-not-remove" class are removed. History state is reflected from the child to the parent. Framer also incorporates "patches" which modify specific site-specific elements to support better support this behavior.
 
 # Deployment and Configuration
