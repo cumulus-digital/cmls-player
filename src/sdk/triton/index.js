@@ -25,6 +25,7 @@ import NowPlayingHandler from './NowPlayingHandler';
 import { SDK } from 'SDK';
 import { appSignals } from '@/signals';
 import generateUuid from 'Utils/generateUuid';
+import { Framer } from '@/framer/Framer';
 
 export default class TritonSDK {
 	static player;
@@ -45,7 +46,7 @@ export default class TritonSDK {
 		const scriptTag = (
 			<script
 				id={config.sdk_id}
-				class="do-not-remove"
+				class={Framer.safeClass}
 				async={true}
 				src={scriptUrl}
 				onLoad={this.onScriptLoad.bind(self)}

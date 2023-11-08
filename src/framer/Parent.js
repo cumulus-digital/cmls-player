@@ -30,7 +30,7 @@ export default class Parent {
 		log.debug('Initializing Parent');
 
 		this.framer.loadingIndicator = (
-			<div id={siteframe_loading_id} class="do-not-remove">
+			<div id={siteframe_loading_id} class={Framer.safeClass}>
 				<div id="js8d">
 					{Array.from(Array(5).keys()).map((i) => (
 						<div />
@@ -117,16 +117,61 @@ export default class Parent {
 	}
 
 	clearBody() {
-		log.debug('Removing elements that do not specify .do-not-remove');
-		document.querySelectorAll('body > *').forEach((el) => {
-			if (
-				el.id === siteframe_id ||
-				el.className.includes('do-not-remove')
-			) {
-				return;
-			}
-			el.remove();
-		});
+		const removeElements = () => {
+			log.debug(
+				'Removing elements that do not specify .' + Framer.safeClass
+			);
+			document.querySelectorAll('body > *').forEach((el) => {
+				if (
+					el.id === siteframe_id ||
+					el.className.includes(Framer.safeClass)
+				) {
+					return;
+				}
+				el.remove();
+			});
+		};
+
+		if (window.googletag) {
+			window.googletag.cmd = window.googletag.cmd || [];
+			window.googletag.cmd.push(() => {
+				const slots = window.googletag.pubads().getSlots();
+				const slotsToDestroy = [];
+				const describedToDestroy = [];
+				if (slots?.length) {
+					slots.forEach((slot) => {
+						const elId = slot.getSlotElementId();
+						const el = window.document.getElementById(elId);
+						if (
+							el &&
+							!el.matches(`body > .${Framer.safeClass} *`)
+						) {
+							describedToDestroy.push({
+								id: elId,
+								path: slot.getAdUnitPath(),
+								targeting: slot
+									.getTargetingKeys()
+									?.map((key) => [
+										key,
+										slot.getTargeting(key),
+									]),
+							});
+							slotsToDestroy.push(slot);
+						}
+					});
+				}
+				if (slotsToDestroy.length) {
+					log.debug(
+						`Destroying google ad slots not within a .${Framer.safeClass} element`,
+						describedToDestroy
+					);
+					window.googletag.destroySlots(slotsToDestroy);
+				}
+				removeElements();
+			});
+		} else {
+			removeElements();
+		}
 	}
 
 	loadIframe(url) {
@@ -176,7 +221,7 @@ export default class Parent {
 							width="0"
 							height="0"
 							frameborder="0"
-							class="do-not-remove"
+							class={Framer.safeClass}
 							aria-hidden="false"
 							aria-label="Loading content..."
 						/>

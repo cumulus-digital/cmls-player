@@ -26,6 +26,8 @@ export class Framer {
 
 	messageKey = 'cmls_framer';
 
+	static safeClass = 'do-not-remove';
+
 	loadingTimeout;
 
 	linkErrors = {

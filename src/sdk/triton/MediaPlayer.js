@@ -17,6 +17,7 @@ import { stream_status } from 'Consts';
 
 //import { TritonSDK } from '.';
 import { batch } from 'react-redux';
+import { Framer } from '@/framer/Framer';
 
 export default class MediaPlayer {
 	parent;
@@ -38,7 +39,7 @@ export default class MediaPlayer {
 		);
 
 		this.el = (
-			<div class={`cmls-player-mediaplayer do-not-remove`}>
+			<div class={`cmls-player-mediaplayer ${Framer.safeClass}`}>
 				<div class="outer-container">
 					<div class="inner-container">
 						<div
