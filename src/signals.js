@@ -14,9 +14,12 @@ export const appSignals = {
 	default_button_height: signal('55px'),
 
 	offline_label: signal('Listen Live!'),
-	button_label: signal('Listen Live!'),
 	show_logo_without_artwork: signal(false),
 	show_cue_label: signal(true),
+	with_mobile_bar: signal(false),
+	mobile_bar_top: signal('0px'),
+
+	button_label: signal('Listen Live!'),
 	cue_label: signal(''),
 
 	button_width: signal(0),

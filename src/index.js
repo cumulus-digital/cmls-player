@@ -129,6 +129,17 @@ window.customElements.define(
 				appSignals.default_button_height.value = props['button-height'];
 			}
 
+			if (
+				props?.['with-mobile-bar-on-scroll'] !== undefined &&
+				String(props?.['with-mobile-bar-on-scroll']).toLowerCase() ===
+					'true'
+			) {
+				appSignals.with_mobile_bar.value = true;
+			}
+			if (props?.['mobile-bar-top'] !== undefined) {
+				appSignals.mobile_bar_top.value = props['mobile-bar-top'];
+			}
+
 			batch(() => {
 				let minutes_between_preroll = config.minutes_between_preroll;
 				if (props?.['minutes-between-preroll'] !== undefined) {
@@ -269,6 +280,7 @@ function CmlsPlayerProvider(props) {
 			`--highlight_color: ${appSignals.highlight_color}`,
 			`--text_color: ${appSignals.text_color}`,
 			`--default_button_height: ${appSignals.default_button_height}`,
+			`--mobile_bar_top: ${appSignals.mobile_bar_top}`,
 
 			`--button_top: ${appSignals.button_top}px`,
 			`--button_offset_top: ${appSignals.button_offset_top}px`,

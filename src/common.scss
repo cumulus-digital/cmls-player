@@ -15,3 +15,11 @@
 		}
 	}
 }
+
+@mixin with-mobile-bar($selector: ".mobile-bar &") {
+	@media (max-width: 720px) {
+		#{$selector} {
+			@content;
+		}
+	}
+}

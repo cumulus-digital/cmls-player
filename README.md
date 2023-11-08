@@ -59,6 +59,8 @@ Available `<cmls-player>` attributes are as follows. All attributes of this elem
 * `minutes-between-preroll` ("5") Number of minutes after the last time a preroll was displayed before another preroll will be shown on play.
 * `offline-label` ("Listen Live") Along with the active station name, this text is displayed when not playing.
 * `show-logo-without-artwork` ("false") When the player is streaming, if there is no artwork available for the current cue point, this toggle allows showing the defined `logo` of the active station. The artwork container has a black background by default.
+* `with-mobile-bar-on-scroll` ("false") On mobile, the button becomes a fixed top "bar" when scrolled past.
+* `mobile-bar-top` ("0px") When using `with-mobile-bar-on-scroll`, you can specify the "top" value of the fixed bar. Value must be a CSS unit.
 
 ## `<cmls-station>` tag
 
