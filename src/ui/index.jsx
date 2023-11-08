@@ -93,7 +93,6 @@ export default function ListenLive(props) {
 				classSet.delete('mobile-bar');
 				classSet.delete('mobile-bar-start');
 				if (box.y < 0 - appState.button_height.value - 5) {
-					console.log('HIDDEN');
 					classSet.add('mobile-bar');
 					if (box.y > 0 - appState.button_height.value - 15) {
 						classSet.add('mobile-bar-start');
@@ -108,7 +107,6 @@ export default function ListenLive(props) {
 			window.addEventListener('scroll', scrollListener, 100);
 
 			return () => {
-				console.log('Removing scroll listener');
 				window.removeEventListener('scroll', scrollListener);
 			};
 		}, [containerRef?.current]);

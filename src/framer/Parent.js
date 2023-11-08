@@ -203,9 +203,9 @@ export default class Parent {
 					return;
 				}
 
-				if (!document.body.classList.contains('iframe-loaded')) {
+				if (!document.body.classList.contains(Framer.loadedClass)) {
 					this.clearBody();
-					document.body.classList.add('iframe-loaded');
+					document.body.classList.add(Framer.loadedClass);
 				}
 				this.framer.hideLoading();
 
@@ -289,7 +289,7 @@ export default class Parent {
 			return;
 		}
 
-		document.body.classList.add('iframe-loaded');
+		document.body.classList.add(Framer.loadedClass);
 
 		const msg = ev.data.message.substring(
 			this.framer.messageKey.length + 1

@@ -119,7 +119,7 @@ export default class Logger {
 			['debug', 'info'].includes(type) &&
 			!window.location.search.includes('debug')
 		) {
-			return;
+			//return;
 		}
 		let { message, headerLength } = this.resolveMessage(request);
 		this.logMessage(type, message, headerLength);

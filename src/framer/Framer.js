@@ -27,6 +27,8 @@ export class Framer {
 	messageKey = 'cmls_framer';
 
 	static safeClass = 'do-not-remove';
+	static loadedClass = 'cmls-iframe-loaded';
+	static loadingClass = 'cmls-iframe-loading';
 
 	loadingTimeout;
 
@@ -204,7 +206,7 @@ export class Framer {
 
 	showLoading() {
 		log.debug('Showing loading');
-		document.body.classList.add('iframe-loading');
+		document.body.classList.add(Framer.loadingClass);
 		if (this.loadingTimeout) {
 			clearTimeout(this.loadingTimeout);
 			this.loadingTimeout = null;
@@ -214,7 +216,7 @@ export class Framer {
 
 	hideLoading() {
 		log.debug('Hiding loading');
-		document.body.classList.remove('iframe-loading');
+		document.body.classList.remove(Framer.loadingClass);
 		if (this.loadingTimeout) {
 			clearTimeout(this.loadingTimeout);
 			this.loadingTimeout = null;
