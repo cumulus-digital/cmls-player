@@ -226,6 +226,32 @@ button {
 			}
 		}
 	}
+
+	@include with-mobile-bar {
+		&.station.logo {
+			display: none;
+		}
+	}
+}
+
+.station-logo {
+	display: none;
+	background: #000;
+	width: calc(var(--button_height) - 10px);
+	height: calc(var(--button_height) - 10px);
+
+	border-radius: 3px;
+
+	&.live-artwork {
+		display: block;
+	}
+
+	@include with-mobile-bar {
+		display: block;
+	}
+	@include with-mobile-bar(".playing.mobile-bar &") {
+		display: none !important;
+	}
 }
 
 .play-icon-container {

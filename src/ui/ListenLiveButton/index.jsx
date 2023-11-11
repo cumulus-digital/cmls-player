@@ -88,7 +88,7 @@ export default function ListenLiveButton(props) {
 				/>
 			);
 		}
-	}, [status, playing, cuepoint]);
+	}, [status, playing, cuepoint, current_station]);
 
 	const content = useMemo(() => {
 		if (appState.sdk.ready.value) {
@@ -100,6 +100,20 @@ export default function ListenLiveButton(props) {
 			);
 		}
 	}, [appState.sdk.ready.value]);
+
+	const mobileLogo = useMemo(() => {
+		if (current_station.logo) {
+			return (
+				<Artwork
+					url={current_station.logo}
+					alt={`Logo for ${
+						current_station.name || current_station.mount
+					}}`}
+					class="station-logo"
+				/>
+			);
+		}
+	}, [current_station]);
 
 	const togglePlay = useCallback(
 		(e) => {
@@ -130,6 +144,7 @@ export default function ListenLiveButton(props) {
 			aria-pressed={playing}
 			disabled={isDisabled}
 		>
+			{mobileLogo}
 			{artwork}
 			{content}
 		</button>

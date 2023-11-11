@@ -186,6 +186,18 @@ export default class CuePointHandler {
 			return;
 		}
 
+		if (e?.data?.cuePoint?.adType === 'endbreak') {
+			log.debug(
+				'Ad break start received with adType "endbreak", ignoring and resetting cue point.',
+				{
+					mount: station.mount,
+					event: e,
+				}
+			);
+			SDK.setCuePoint({ mount: station.mount });
+			return;
+		}
+
 		log.debug('Ad break start', {
 			mount: station.mount,
 			event: e,
