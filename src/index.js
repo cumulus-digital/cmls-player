@@ -25,6 +25,8 @@ import ListenLive from 'UI';
 
 import './framer';
 
+import initPatches from './patches/index.js';
+
 import(
 	/* webpackChunkName: 'outer' */
 	/* webpackMode: 'lazy' */
@@ -262,6 +264,8 @@ window.customElements.define(
 			window.cmls_player = window.cmls_player || {};
 			window.cmls_player.play = SDK.play;
 
+			initPatches();
+
 			register(CmlsPlayerProvider, 'cmls-player-component', [], {
 				shadow: true,
 			});
@@ -304,4 +308,3 @@ function CmlsPlayerProvider(props) {
 		</Provider>
 	);
 }
-//register(CmlsPlayerProvider, 'cmls-player', [], { shadow: true });
