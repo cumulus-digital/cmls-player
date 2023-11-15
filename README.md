@@ -74,6 +74,23 @@ The `<cmls-station>` tags define the actual streaming stations the player can ac
 * `vast` Optional. Vast tag URL for the station's preroll.
 * `order` Optional. When defining multiple stations, the implicit order is primary, then all others in the order they are defined. This attribute allows you to override that behavior with the exception of the primary station.
 
+# Events
+
+The player and Framer emit events to the global window object you can listen to.
+
+## Player Events
+
+* `cmls-player-stream-start` Fired when live streaming begins.
+* `cmls-player-stream-stop` Fired when stream stops.
+* `cmls-player-stream-status` Fired on status changes from the SDK.
+* `cmls-player-stream-error` Fired when an error occurs in the streaming SDK.
+* `cmls-player-cue-point` Fired on cue point changes, event detail includes the new cue point.
+
+## Framer Events
+
+* `cmls-player-iframe-created` Fired when the main window iframe is first created.
+* `cmls-player-iframe-state` Fired when the iframe's state (title, url) changes.
+
 # Global API
 
 The player exposes some helper functions to allow calling behaviors from external scripts. Public functions are under the `window.cmls_player` global.
