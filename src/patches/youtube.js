@@ -10,6 +10,8 @@ import generateUuid from 'Utils/generateUuid';
  */
 const ytEmbedDomains = ['youtube.com', 'youtu.be', 'youtube-nocookie.com'];
 
+const patchAttrib = 'data-cmlsp-patched';
+
 let ytSdkLoaded = false;
 
 const onYtSdkLoad = () => {
@@ -34,7 +36,7 @@ const log = new Logger('Patches / YouTube');
 function getYtIframes() {
 	return document.querySelectorAll(
 		ytEmbedDomains
-			.map((d) => `iframe[src*="${d}"]:not([cmls-patched])`)
+			.map((d) => `iframe[src*="${d}"]:not([${patchAttrib}])`)
 			.join(',')
 	);
 }
@@ -45,9 +47,12 @@ function getYtIframes() {
 const ytPlayers = [];
 const onStreamStart = (e) => {
 	ytPlayers.forEach((ytp) => {
-		if (ytp?.pauseVideo) {
-			log.debug('Pausing YT video', ytp?.g);
-			ytp.pauseVideo();
+		if (ytp?.getPlayerState) {
+			const state = ytp.getPlayerState();
+			if (state > 0 && state !== 2) {
+				log.debug('Pausing YT video', ytp?.g);
+				ytp.pauseVideo();
+			}
 		}
 	});
 };
@@ -91,7 +96,7 @@ export default function youtubePatchInit() {
 			.then(() => {
 				const yts = getYtIframes();
 				yts.forEach((yt) => {
-					if (!yt.getAttribute('cmls-patched')) {
+					if (!yt.getAttribute(patchAttrib)) {
 						const id = yt.getAttribute('id');
 						const ytp = new window.YT.Player(id, {
 							events: {
@@ -105,7 +110,7 @@ export default function youtubePatchInit() {
 							},
 						});
 
-						yt.setAttribute('cmls-patched', true);
+						yt.setAttribute(patchAttrib, true);
 						ytPlayers.push(ytp);
 
 						log.debug('Assigned listener', ytp);

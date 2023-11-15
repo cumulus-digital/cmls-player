@@ -11,10 +11,12 @@ const vimeoEmbedDomains = ['player.vimeo.com'];
 
 const log = new Logger('Patches / Vimeo');
 
+const patchAttrib = 'data-cmlsp-patched';
+
 function getVimeoIframes() {
 	return document.querySelectorAll(
 		vimeoEmbedDomains
-			.map((d) => `iframe[src*="${d}"]:not([cmls-patched])`)
+			.map((d) => `iframe[src*="${d}"]:not([${patchAttrib}])`)
 			.join(',')
 	);
 }
@@ -25,9 +27,13 @@ function getVimeoIframes() {
 const vps = [];
 const onStreamStart = () => {
 	vps.forEach((vp) => {
-		if (vp?.pause) {
-			log.debug('Pausing vimeo video', vp?.element);
-			vp.pause();
+		if (vp?.getPaused) {
+			vp.getPaused().then((paused) => {
+				if (!paused) {
+					log.debug('Pausing vimeo video', vp?.element);
+					vp.pause();
+				}
+			});
 		}
 	});
 };
@@ -55,7 +61,7 @@ export default function vimeoPatchInit() {
 			.then(() => {
 				const vimeos = getVimeoIframes();
 				vimeos.forEach((v) => {
-					if (v.getAttribute('cmls-patched')) {
+					if (v.getAttribute(patchAttrib)) {
 						return;
 					}
 					const vimeoPlayer = new window.Vimeo.Player(v);
@@ -63,7 +69,7 @@ export default function vimeoPatchInit() {
 						SDK.stop();
 					});
 
-					v.setAttribute('cmls-patched', true);
+					v.setAttribute(patchAttrib, true);
 					vps.push(vimeoPlayer);
 					log.debug('Assigned listener', v);
 				});
