@@ -8,11 +8,6 @@ import waitForVariable from 'Utils/waitForVariable';
  */
 
 const vimeoEmbedDomains = ['player.vimeo.com'];
-let vimeoSdkLoaded = false;
-
-const onVimeoSdkLoad = () => {
-	vimeoSdkLoaded = true;
-};
 
 const log = new Logger('Patches / Vimeo');
 
@@ -23,6 +18,19 @@ function getVimeoIframes() {
 			.join(',')
 	);
 }
+
+/**
+ * Handle pausing videos if the stream starts
+ */
+const vps = [];
+function onStreamStart() {
+	vps.forEach((vp) => {
+		log.debug('Pausing video', vp);
+		vp?.pause();
+	});
+}
+window.addEventListener('cmls-player-preroll-start', onStreamStart);
+window.addEventListener('cmls-player-stream-start', onStreamStart);
 
 export default function vimeoPatchInit() {
 	const vimeos = getVimeoIframes();
@@ -37,7 +45,6 @@ export default function vimeoPatchInit() {
 				<script
 					async
 					src="https://player.vimeo.com/api/player.js"
-					onLoad={onVimeoSdkLoad}
 				></script>
 			);
 		}
@@ -53,7 +60,9 @@ export default function vimeoPatchInit() {
 					vimeoPlayer.on('play', function () {
 						SDK.stop();
 					});
+
 					v.setAttribute('cmls-patched', true);
+					vps.push(vimeoPlayer);
 					log.debug('Assigned listener', v);
 				});
 			})

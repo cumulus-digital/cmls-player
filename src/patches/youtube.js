@@ -39,6 +39,19 @@ function getYtIframes() {
 	);
 }
 
+/**
+ * Handle pausing videos if stream starts
+ */
+const ytps = [];
+function onStreamStart(e) {
+	ytps.forEach((ytp) => {
+		log.debug('Pausing video', ytp);
+		ytp?.pauseVideo();
+	});
+}
+window.addEventListener('cmls-player-preroll-start', onStreamStart);
+window.addEventListener('cmls-player-stream-start', onStreamStart);
+
 export default function youtubePatchInit() {
 	const yts = getYtIframes();
 
@@ -59,30 +72,43 @@ export default function youtubePatchInit() {
 				url.searchParams.set('enablejsapi', 1);
 				yt.setAttribute('src', url);
 			}
+			/*
 			const id = yt.getAttribute('id');
 			if (!id || !id.length) {
 				yt.setAttribute('id', generateUuid());
 			}
+			*/
 		});
 
 		waitForVariable(null, () => {
-			if (typeof window.YT?.Player !== 'undefined') {
+			if (
+				typeof window.YT?.Player !== 'undefined' &&
+				ytSdkLoaded === true
+			) {
 				return true;
 			}
 		})
 			.then(() => {
-				log.debug('YT SDK loaded');
 				const yts = getYtIframes();
 				yts.forEach((yt) => {
 					if (!yt.getAttribute('cmls-patched')) {
 						const id = yt.getAttribute('id');
-						const ytp = new window.YT.Player(id);
+						const ytp = new window.YT.Player(yt);
 						ytp.addEventListener('onStateChange', (e) => {
 							if (e.data === window.YT.PlayerState.PLAYING) {
 								SDK.stop();
 							}
 						});
+
+						window.addEventListener(
+							'cmls-player-preroll-start',
+							() => ytp.pauseVideo()
+						);
+
 						yt.setAttribute('cmls-patched', true);
+						ytps.push(ytp);
+
+						log.debug('Assigned listener', yt);
 					}
 				});
 			})

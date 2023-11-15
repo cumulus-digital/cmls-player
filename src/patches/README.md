@@ -1,3 +1,3 @@
 # Player Patches
 
-Patches allow for custom, specific behavior relevant to the player, and are loaded when the player initializes.
+Player Patches allow for custom, specific behavior relevant to the player, are loaded only when the player initializes, and run immediately and on DOM ready.

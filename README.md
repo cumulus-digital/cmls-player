@@ -85,6 +85,8 @@ The player and Framer emit events to the global window object you can listen to.
 * `cmls-player-stream-status` Fired on status changes from the SDK.
 * `cmls-player-stream-error` Fired when an error occurs in the streaming SDK.
 * `cmls-player-cue-point` Fired on cue point changes, event detail includes the new cue point.
+* `cmls-player-preroll-start` Fired when preroll begins playing.
+* `cmls-player-preroll-end` Fired when preroll ends (both successfully and on error).
 
 ## Framer Events
 
