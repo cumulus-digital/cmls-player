@@ -13,7 +13,8 @@ import Logger from 'Utils/Logger';
 const log = new Logger('MediaSession API');
 
 /**
- * Respond to and provide rich media
+ * Respond to and provide rich media interactions and data
+ * Provides now playing and controls on phone lock screens and browser UIs
  */
 if ('mediaSession' in navigator) {
 	let initialized = false;
@@ -24,7 +25,10 @@ if ('mediaSession' in navigator) {
 			initialized = true;
 			unsub();
 
-			// Don't allow pausing, this is live!
+			/**
+			 * Triton SDK doesn't handle pausing well, so we will intercept
+			 * that command and do a real stop.
+			 */
 			const handleStop = () => {
 				if (SDK.isPlayingHere()) {
 					log.debug('Handling stop');
@@ -34,6 +38,8 @@ if ('mediaSession' in navigator) {
 			navigator.mediaSession.setActionHandler('stop', handleStop);
 			navigator.mediaSession.setActionHandler('pause', handleStop);
 
+			const generateArtistLine = (cuepoint) => {};
+
 			/**
 			 * Set cue point metadata when playing
 			 */
@@ -42,23 +48,38 @@ if ('mediaSession' in navigator) {
 				playing,
 				station,
 				cuepoint,
+				cuelabel,
 			}) => {
 				if (!station) return;
 				if (!playing) return;
 
-				// If we're playing but status is not LIVE_PLAYING, set metadata to our status
+				// Default to station data
+				const metadata = {
+					title:
+						station?.name ||
+						station?.mount.substring(
+							0,
+							station?.mount?.length - 3
+						) ||
+						null,
+					artist: cuelabel || station?.tagline || null,
+				};
+
+				if (station?.logo) {
+					metadata.artwork = [
+						{
+							src: station.logo,
+						},
+					];
+				}
+
+				/**
+				 * If we're playing but status is not LIVE_PLAYING,
+				 * set metadata to our status
+				 */
 				if (status !== stream_status.LIVE_PLAYING) {
 					if (!station.name) return;
 
-					const notPlayingMeta = {
-						title: station.name,
-					};
-					if (station?.tagline) {
-						notPlayingMeta.artist = station.tagline;
-					}
-					if (station?.logo) {
-						notPlayingMeta.artwork = [{ src: station.logo }];
-					}
 					let status_msg;
 					switch (status) {
 						case stream_status.LIVE_BUFFERING:
@@ -73,51 +94,15 @@ if ('mediaSession' in navigator) {
 							break;
 					}
 					if (status_msg) {
-						notPlayingMeta.artist = status_msg;
+						metadata.artist = status_msg;
 					}
-					log.debug('Setting metadata to status', notPlayingMeta);
-					navigator.mediaSession.metadata = new MediaMetadata(
-						notPlayingMeta
-					);
-					return;
 				}
 
-				// If there's no cuepoint or it's an ad, set station data as mediameta
-				if (!cuepoint?.title || cuepoint?.type === 'ad') {
-					const stationMeta = {
-						title: station?.name,
-						artist:
-							cuepoint?.type === 'ad'
-								? "We'll return after these messages"
-								: station?.tagline,
-					};
-					if (
-						Object.values(stationMeta).filter((k) =>
-							k.trim ? k.trim() : null
-						).length
-					) {
-						log.debug('Setting metadata to station data', {
-							cuepoint,
-							metadata: stationMeta,
-						});
-						navigator.mediaSession.metadata = new MediaMetadata(
-							stationMeta
-						);
-					}
-					return;
-				}
-
-				// If we're in a commercial break, set station data
-
-				const metadata = {
-					title: cuepoint?.title || station?.name,
-					artist: cuepoint?.artist || station?.tagline,
-				};
-
-				// If there's no cuepoint artwork, try to use the station logo
-				if (!cuepoint?.artwork && station?.logo) {
-					metadata.artwork = [{ src: station.logo }];
+				if (cuepoint?.type === 'ad') {
+					// If we're in an ad break, set "we'll return" message
+					metadata.artist = "We'll return after these messages";
 				} else if (cuepoint?.artwork) {
+					// If our cuepoint has artwork, set it
 					metadata.artwork = [{ src: cuepoint.artwork }];
 				}
 
@@ -144,7 +129,11 @@ if ('mediaSession' in navigator) {
 						state,
 						station
 					);
-					return { status, playing, station, cuepoint };
+					const cuelabel = playerStateSelects['station/cuelabel'](
+						state,
+						station
+					);
+					return { status, playing, station, cuepoint, cuelabel };
 				}
 			);
 
