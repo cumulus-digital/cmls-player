@@ -42,13 +42,15 @@ function getYtIframes() {
 /**
  * Handle pausing videos if stream starts
  */
-const ytps = [];
-function onStreamStart(e) {
-	ytps.forEach((ytp) => {
-		log.debug('Pausing video', ytp);
-		ytp?.pauseVideo();
+const ytPlayers = [];
+const onStreamStart = (e) => {
+	ytPlayers.forEach((ytp) => {
+		if (ytp?.pauseVideo) {
+			log.debug('Pausing YT video', ytp?.g);
+			ytp.pauseVideo();
+		}
 	});
-}
+};
 window.addEventListener('cmls-player-preroll-start', onStreamStart);
 window.addEventListener('cmls-player-stream-start', onStreamStart);
 
@@ -72,12 +74,10 @@ export default function youtubePatchInit() {
 				url.searchParams.set('enablejsapi', 1);
 				yt.setAttribute('src', url);
 			}
-			/*
 			const id = yt.getAttribute('id');
 			if (!id || !id.length) {
 				yt.setAttribute('id', generateUuid());
 			}
-			*/
 		});
 
 		waitForVariable(null, () => {
@@ -93,25 +93,25 @@ export default function youtubePatchInit() {
 				yts.forEach((yt) => {
 					if (!yt.getAttribute('cmls-patched')) {
 						const id = yt.getAttribute('id');
-						const ytp = new window.YT.Player(yt);
-						ytp.addEventListener('onStateChange', (e) => {
-							if (e.data === window.YT.PlayerState.PLAYING) {
-								SDK.stop();
-							}
+						const ytp = new window.YT.Player(id, {
+							events: {
+								onStateChange: (e) => {
+									if (
+										e.data === window.YT.PlayerState.PLAYING
+									) {
+										SDK.stop();
+									}
+								},
+							},
 						});
 
-						window.addEventListener(
-							'cmls-player-preroll-start',
-							() => ytp.pauseVideo()
-						);
-
 						yt.setAttribute('cmls-patched', true);
-						ytps.push(ytp);
+						ytPlayers.push(ytp);
 
-						log.debug('Assigned listener', yt);
+						log.debug('Assigned listener', ytp);
 					}
 				});
 			})
-			.catch(() => log.debug('YT SDK failed'));
+			.catch((e) => log.debug('YT SDK failed', e));
 	}
 }

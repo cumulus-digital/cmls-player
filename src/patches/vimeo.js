@@ -23,12 +23,14 @@ function getVimeoIframes() {
  * Handle pausing videos if the stream starts
  */
 const vps = [];
-function onStreamStart() {
+const onStreamStart = () => {
 	vps.forEach((vp) => {
-		log.debug('Pausing video', vp);
-		vp?.pause();
+		if (vp?.pause) {
+			log.debug('Pausing vimeo video', vp?.element);
+			vp.pause();
+		}
 	});
-}
+};
 window.addEventListener('cmls-player-preroll-start', onStreamStart);
 window.addEventListener('cmls-player-stream-start', onStreamStart);
 
