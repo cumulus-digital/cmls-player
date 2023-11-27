@@ -16,7 +16,7 @@ Framer: Allows the SDK interface to survive navigation around the website by con
 
 *Note: Only one instance of the player button can exist on a page.*
 
-The player button is configured in HTML, and rendered in place. One or more stations must be defined. If more than one station is defined, a dropdown is made available to select the station to play. One station is designated as "primary". If not explicitly configured in the station tags, the first station is chosen.
+The player button is configured in HTML, and rendered in place where that HTML is inserted. One or more stations must be defined. If more than one station is defined, a dropdown is made available to select the station to play. One station is designated as "primary". If not explicitly configured in the station tags, the first station is chosen.
 
 The main player button controls and displays metadata for the "active" station. On load, the initial active station is the primary. If additional stations are defined and another station is played, it becomes the "active" station. When clicked, the player button begins or stops the stream for the active station.
 
