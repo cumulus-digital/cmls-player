@@ -46,7 +46,7 @@ export default function vimeoPatchInit() {
 	if (vimeos.length) {
 		if (
 			!document.querySelector(
-				'script[src*="https://player.vimeo.com/api/player.js"]'
+				'script[src*="player.vimeo.com/api/player.js"]'
 			)
 		) {
 			document.head.append(

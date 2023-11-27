@@ -35,9 +35,7 @@ const log = new Logger('Patches / YouTube');
 
 function getYtIframes() {
 	return document.querySelectorAll(
-		ytEmbedDomains
-			.map((d) => `iframe[src*="${d}"]:not([${patchAttrib}])`)
-			.join(',')
+		ytEmbedDomains.map((d) => `iframe[src*="${d}"]`).join(',')
 	);
 }
 
@@ -63,11 +61,7 @@ export default function youtubePatchInit() {
 	const yts = getYtIframes();
 
 	if (yts.length) {
-		if (
-			!document.querySelector(
-				'script[src*="https://www.youtube.com/iframe_api"]'
-			)
-		) {
+		if (!document.querySelector('script[src*="youtube.com/iframe_api"]')) {
 			document.head.append(
 				<script async src="https://www.youtube.com/iframe_api"></script>
 			);
@@ -78,10 +72,6 @@ export default function youtubePatchInit() {
 			if (url.searchParams.get('enablejsapi') !== '1') {
 				url.searchParams.set('enablejsapi', 1);
 				yt.setAttribute('src', url);
-			}
-			const id = yt.getAttribute('id');
-			if (!id || !id.length) {
-				yt.setAttribute('id', generateUuid());
 			}
 		});
 
@@ -97,18 +87,24 @@ export default function youtubePatchInit() {
 				const yts = getYtIframes();
 				yts.forEach((yt) => {
 					if (!yt.getAttribute(patchAttrib)) {
-						const id = yt.getAttribute('id');
-						const ytp = new window.YT.Player(id, {
-							events: {
-								onStateChange: (e) => {
-									if (
-										e.data === window.YT.PlayerState.PLAYING
-									) {
-										SDK.stop();
-									}
+						if (!yt.getAttribute('id')) {
+							yt.setAttribute('id', generateUuid());
+						}
+						const ytp = new window.YT.Player(
+							yt.getAttribute('id'),
+							{
+								events: {
+									onStateChange: (e) => {
+										if (
+											e.data ===
+											window.YT.PlayerState.PLAYING
+										) {
+											SDK.stop();
+										}
+									},
 								},
-							},
-						});
+							}
+						);
 
 						yt.setAttribute(patchAttrib, true);
 						ytPlayers.push(ytp);
