@@ -86,6 +86,8 @@ export default function ListenLive(props) {
 	if (appState.with_mobile_bar.value) {
 		useEffect(() => {
 			const scrollListener = throttle(() => {
+				if (!containerRef.current) return;
+
 				const root = containerRef.current.getRootNode().host;
 				const box = root.getBoundingClientRect();
 				const classSet = new Set(classNames.value);
