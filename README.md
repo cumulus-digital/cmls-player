@@ -55,10 +55,10 @@ Available `<cmls-player>` attributes are as follows. Unless specified, all attri
 * `background-color` ("#e00") CSS background color for the player button and dropdown.
 * `highlight-color` ("#000") CSS color used for hover states and other accents. Be aware, the highlight color is often mixed with the background-color at varying opacities.
 * `text-color` ("#FFF") CSS color of all text displayed in the player button and dropdown.
-* `button-height` ("55px") Specify the base height of the button. If its container has a specified height, the button will not exceed it. Value must be a CSS unit, with its unit identifier (e.g. "55px", "3em", "100%").
+* `button-height` ("50px") Specify the base height of the button. If its container has a specified height, the button will not exceed it. Value must be a CSS unit, with its unit identifier (e.g. "55px", "3em", "100%").
 * `minutes-between-preroll` ("5") Number of minutes after the last time a preroll was displayed before another preroll will be shown on play.
-* `offline-label` ("Listen Live") Along with the active station name, this text is displayed when not playing.
-* `show-logo-without-artwork` ("false") When the player is streaming, if there is no artwork available for the current cue point, this toggle allows showing the defined `logo` of the active station. The artwork container has a black background by default.
+* `offline-label` ("Listen Live!") This text is displayed when not playing along with the active station's "name" attribute.
+* `show-logo-without-artwork` ("false") When the player is streaming, if there is no artwork available for the current cue point, this toggle allows showing the defined `logo` of the active station. The artwork container has a black background.
 * `with-mobile-bar-on-scroll` ("false") On mobile, the button becomes a fixed top "bar" when scrolled past.
 * `mobile-bar-top` ("0px") When using `with-mobile-bar-on-scroll`, you can specify the "top" value of the fixed bar. Value must be a CSS unit.
 

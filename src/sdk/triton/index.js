@@ -195,7 +195,8 @@ export default class TritonSDK {
 	}
 	static onStreamError(e) {
 		const station = playerStateSelects['station/current'](store.getState());
-		SDK.emitEvent('stream-error', { mount: stations?.mount, error: e });
+		SDK.emitEvent('stream-error', { mount: station?.mount, error: e });
+		log.error('onStreamError', e);
 		SDK?.onStreamError();
 	}
 
