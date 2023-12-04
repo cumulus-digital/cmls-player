@@ -109,7 +109,7 @@ export default function ListenLive(props) {
 		if (!containerRef.current) return;
 
 		resetPhysicals();
-		const watcher = setInterval(resetPhysicals, 300);
+		const watcher = setInterval(resetPhysicals, 100);
 
 		return () => {
 			clearInterval(watcher);
@@ -120,24 +120,24 @@ export default function ListenLive(props) {
 	 * Watch for scroll
 	 */
 	if (appState.with_mobile_bar.value) {
-		useLayoutEffect(() => {
-			const scrollListener = throttle(() => {
-				if (!containerRef.current) return;
+		useEffect(() => {
+			const scrollListener = throttle(
+				() => {
+					if (!scrollPixelRef.current) return;
+					if (!appState.button_height.value) return;
 
-				const root = containerRef.current.getRootNode().host;
-				const box = root.getBoundingClientRect();
+					const scrollY = window.scrollY;
+					const pixelY = scrollPixelRef.current.offsetTop;
 
-				if (box.y > 0 - appState.button_height.value - 15) {
-					classNames.add('mobile-bar');
-					if (box.y > 0 - appState.button_height.value - 15) {
-						classNames.add('mobile-bar-start');
+					if (scrollY > pixelY + appState.button_height.value - 15) {
+						classNames.add('mobile-bar');
 					} else {
-						classNames.delete('mobile-bar-start');
+						classNames.delete('mobile-bar');
 					}
-				} else {
-					classNames.deleteMany(['mobile-bar', 'mobile-bar-start']);
-				}
-			});
+				},
+				150,
+				{ leading: false, trailing: true }
+			);
 
 			scrollListener();
 			window.addEventListener('scroll', scrollListener);

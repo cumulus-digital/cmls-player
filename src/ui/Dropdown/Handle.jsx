@@ -59,7 +59,7 @@ export default forwardRef(function DropdownHandle(props, me) {
 		}
 	};
 
-	const classNames = useClassNameSignal('dropdown-handle');
+	const classNames = useClassNameSignal('dropdown-handle with-hover-box');
 	const expanded = useSignal(null);
 	useSignalEffect(() => {
 		if (appState.dropdown_open.value) {

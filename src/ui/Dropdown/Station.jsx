@@ -131,7 +131,7 @@ export default function DropdownStation(props) {
 	const nowPlayingLabel = useSignal();
 	useLayoutEffect(() => {
 		if (playing === station.mount) {
-			nowPlayingLabel.value = <em class="status">Streaming Live</em>;
+			nowPlayingLabel.value = <em class="status">Now Streaming LIVE</em>;
 		} else {
 			nowPlayingLabel.value = null;
 		}
@@ -154,7 +154,7 @@ export default function DropdownStation(props) {
 		}
 	}, [station.logo, station.name, actionIcon.value]);
 
-	const classNames = useClassNameSignal('dropdown-station');
+	const classNames = useClassNameSignal('dropdown-station with-hover-box');
 	useLayoutEffect(() => {
 		classNames.deleteMany(['playing', 'has-cue']);
 		if (playing === station.mount) {

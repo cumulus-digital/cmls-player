@@ -156,7 +156,7 @@ export default function ListenLiveButton(props) {
 	return (
 		<button
 			ref={buttonRef}
-			class="listen-live-button"
+			class="listen-live-button with-hover-box"
 			onClick={togglePlay}
 			title={buttonAlt}
 			alt={buttonAlt}

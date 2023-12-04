@@ -36,6 +36,8 @@ export default function LabelArea() {
 	useSignalEffect(() => {
 		if (appState.cue_label.value?.length) {
 			classNames.add('has-cue-label');
+		} else {
+			classNames.delete('has-cue-label');
 		}
 	});
 
