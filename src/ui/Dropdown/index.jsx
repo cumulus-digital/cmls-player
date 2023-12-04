@@ -27,11 +27,13 @@ export default function Dropdown(props) {
 			<Handle
 				id={handleId}
 				ref={handleRef}
+				containerId={containerId}
 				onInteraction={handleActivation}
 			/>
 			<Container
 				id={containerId}
 				ref={containerRef}
+				handleId={handleId}
 				handleRef={handleRef}
 				focusFirstStation={focusFirstStation}
 			/>

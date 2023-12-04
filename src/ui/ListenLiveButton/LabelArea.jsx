@@ -1,5 +1,5 @@
 import { h } from 'preact';
-import { useContext, useMemo } from 'preact/hooks';
+import { useContext, useLayoutEffect, useMemo } from 'preact/hooks';
 
 import ScrollLabel from '@/ui/Generics/ScrollLabel';
 import { playerStateSelects } from 'Store/playerStateSlice';
@@ -9,6 +9,10 @@ import { stream_status } from 'Consts';
 import { AppContext } from '@/signals';
 import useLogRender from 'Utils/useLogRender';
 import ShuffleLabel from '@/ui/Generics/ShuffleLabel';
+import MarqueeText from 'UI/Generics/MarqueeText';
+import SlidingText from 'UI/Generics/SlidingText';
+import { useSignal, useSignalEffect } from '@preact/signals';
+import { useClassNameSignal } from 'UI/hooks/ClassNameSignal';
 
 export default function LabelArea() {
 	useLogRender('LabelArea');
@@ -20,50 +24,61 @@ export default function LabelArea() {
 		playerStateSelects['station/current'],
 		shallowEqual
 	);
-	const buttonLabel = useMemo(
-		() => [appState.button_label, current_station?.name],
-		[appState.button_label.value, current_station]
-	);
 
-	const classnames = useMemo(() => {
-		const list = ['label-area'];
+	const buttonLabel = useMemo(() => {
+		if (status === stream_status.LIVE_CONNECTING) {
+			return appState.button_label.value;
+		}
+		return [appState.button_label, current_station?.name];
+	}, [appState.button_label.value, current_station, status]);
+
+	const classNames = useClassNameSignal('label-area');
+	useSignalEffect(() => {
 		if (appState.cue_label.value?.length) {
-			list.push('has-cue-label');
+			classNames.add('has-cue-label');
 		}
-		return list.join(' ');
-	}, [appState.cue_label.value]);
+	});
 
-	const showNowPlaying = useMemo(() => {
-		// don't show if we're not playing
-		if (status !== stream_status.LIVE_PLAYING || !playing) {
+	const nowPlayingLabel = useSignal();
+	useLayoutEffect(() => {
+		if (!playing || status !== stream_status.LIVE_PLAYING) {
+			nowPlayingLabel.value = null;
 			return;
 		}
 
-		// don't show if there's a cue label and our button is short
 		if (
-			!(
-				appState.show_cue_label.value &&
-				appState.button_height.value > 55
-			)
+			appState.show_cue_label.value &&
+			appState.cue_label.value?.length &&
+			appState.button_height.value < 55
 		) {
-			return;
+			nowPlayingLabel.value = null;
 		}
 
-		return <div class="playing-label">Now playing</div>;
-	}, [status, appState.button_height.value, playing]);
+		nowPlayingLabel.value = <div class="playing-label">Now playing</div>;
+	}, [status, playing, appState.button_height]);
+
+	const cueLabel = useSignal();
+	useSignalEffect(() => {
+		if (appState.cue_label.value?.length) {
+			cueLabel.value = (
+				<MarqueeText class="cue" label={appState.cue_label} />
+			);
+		} else {
+			cueLabel.value = null;
+		}
+	});
 
 	return (
-		<div class={classnames}>
-			{showNowPlaying}
-			<ShuffleLabel
-				tagName="h1"
-				speedModifier="3"
+		<div class={classNames}>
+			{nowPlayingLabel}
+			<SlidingText
 				class="state"
+				tagname="h1"
+				delay={7}
+				speed={6}
 				labels={buttonLabel}
 			/>
-			{appState.cue_label.value?.length ? (
-				<ScrollLabel class="cue" label={appState.cue_label} />
-			) : null}
+			{cueLabel}
 		</div>
 	);
 }

@@ -28,7 +28,7 @@ import generateUuid from 'Utils/generateUuid';
 import { Framer } from '@/framer/Framer';
 
 export default class TritonSDK {
-	static player;
+	static tritonPlayer;
 	static mediaPlayer;
 	static mediaPlayerId;
 	static delayPlay;
@@ -77,8 +77,7 @@ export default class TritonSDK {
 		).playerId = `${config.mediaplayer_id_prefix}-${this.mediaPlayerId}`;
 
 		window.cmls_player_tdsdk = new window.TDSdk(tdPlayerConfig);
-		const player = this.setPlayer(window.cmls_player_tdsdk);
-		this.player = player;
+		this.setPlayer(window.cmls_player_tdsdk);
 
 		this.modules.MediaPlayer = new MediaPlayer(this);
 		this.modules.CuePointHandler = new CuePointHandler(this);
@@ -93,12 +92,12 @@ export default class TritonSDK {
 		log.debug(
 			'Triton SDK Initialized, awaiting ready state',
 			tdPlayerConfig,
-			player
+			this.getPlayer()
 		);
 	}
 
 	static onPlayerReady(e) {
-		if (!this.player) {
+		if (!this.getPlayer()) {
 			log.error('onPlayerReady called, but player is not available.');
 			throw new Error(
 				'onPlayerReady called, but player is not available.'
@@ -119,13 +118,13 @@ export default class TritonSDK {
 				{ event: ev, callback_name: listeners[ev].name },
 				listeners[ev]
 			);
-			this.player.addEventListener(ev, listeners[ev]);
+			this.getPlayer().addEventListener(ev, listeners[ev]);
 		}
 
 		for (const mod in this.modules) {
 			if (this.modules[mod]?.onReady) {
 				log.debug(`Calling ${mod} onReady handler`);
-				this.modules[mod]?.onReady(this.player);
+				this.modules[mod]?.onReady(this.getPlayer());
 			}
 		}
 
@@ -201,15 +200,15 @@ export default class TritonSDK {
 	}
 
 	static setPlayer(player) {
-		this.player = player;
+		this.tritonPlayer = player;
 		window._CMLS = window._CMLS || {};
 		window._CMLS.triton_player = player;
 
-		return this.player;
+		return this.tritonPlayer;
 	}
 
 	static getPlayer() {
-		return this.player;
+		return this.tritonPlayer;
 	}
 
 	static play(mount) {
@@ -224,9 +223,10 @@ export default class TritonSDK {
 			mount = playerState.primary_station;
 		}
 
-		// If we're currently playing, we will stop for a
-		// tick before calling onPlayMessage again.
-		if (playerState.playing) {
+		// If we're currently playing, we must stop for a
+		// tick before attempting to play. Triton gets confused.
+		const mediaElement = this.getPlayer()?.MediaElement;
+		if (mediaElement?.isStopped && !mediaElement.isStopped()) {
 			log.debug('Currently playing, stopping and delaying play');
 			SDK.stop();
 			batch(() => {
@@ -238,12 +238,13 @@ export default class TritonSDK {
 				);
 			});
 			this.delayPlay = setInterval(() => {
-				const { playerState } = store.getState();
-				if (playerState.playing) return;
+				if (!mediaElement.isStopped()) return;
 				clearInterval(this.delayPlay);
-				this.delayPlay = null;
-				SDK.onPlayMessage(mount);
-			}, 300);
+				this.delayPlay = setTimeout(() => {
+					this.delayPlay = undefined;
+					SDK.onPlayMessage(mount);
+				}, 250);
+			}, 100);
 			return;
 		}
 
@@ -275,7 +276,7 @@ export default class TritonSDK {
 	}
 
 	static beginStream(mount) {
-		this.player.play({
+		this.getPlayer().play({
 			mount,
 			trackingParameters: { dist: 'cmls-webplayer' },
 		});
@@ -285,7 +286,7 @@ export default class TritonSDK {
 
 	static stop() {
 		log.debug('Stopping!');
-		this.player.stop();
+		this.getPlayer().stop();
 	}
 
 	static playVastAd(requestConfig) {
@@ -300,7 +301,7 @@ export default class TritonSDK {
 			playerStateActions['set/status'](stream_status.LIVE_PREROLL)
 		);
 		try {
-			this.player.playAd('vastAd', adConfig);
+			this.getPlayer().playAd('vastAd', adConfig);
 		} catch (e) {
 			log.error('Error playing vast ad!', e);
 			this.modules?.MediaPlayer?.onPlaybackError(e);

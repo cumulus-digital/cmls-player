@@ -8,7 +8,8 @@ import { playerStateSelects } from 'Store/playerStateSlice';
 import { IconAngleDown, IconAngleUp } from '@/ui/Icons';
 import { AppContext } from '@/signals';
 import useLogRender from 'Utils/useLogRender';
-import { useComputed } from '@preact/signals';
+import { useComputed, useSignal, useSignalEffect } from '@preact/signals';
+import { useClassNameSignal } from 'UI/hooks/ClassNameSignal';
 
 export default forwardRef(function DropdownHandle(props, me) {
 	useLogRender('DropdownHandle');
@@ -58,13 +59,16 @@ export default forwardRef(function DropdownHandle(props, me) {
 		}
 	};
 
-	const classnames = useComputed(() => {
-		return `dropdown-handle ${
-			appState.dropdown_open.value ? ' open' : ' closed'
-		}`;
-	});
-	const expanded = useComputed(() => {
-		return appState.dropdown_open.value ? true : null;
+	const classNames = useClassNameSignal('dropdown-handle');
+	const expanded = useSignal(null);
+	useSignalEffect(() => {
+		if (appState.dropdown_open.value) {
+			classNames.add('open');
+			expanded.value = true;
+		} else {
+			classNames.delete('open');
+			expanded.value = null;
+		}
 	});
 
 	// Should the button be disabled?
@@ -72,13 +76,16 @@ export default forwardRef(function DropdownHandle(props, me) {
 		return !(interactive && appState.sdk.ready.value);
 	}, [interactive, appState.sdk.ready.value]);
 
-	const icon = useComputed(() => {
+	const actionIcon = useSignal();
+	useSignalEffect(() => {
 		if (appState.sdk.ready.value) {
-			return appState.dropdown_open.value ? (
-				<IconAngleUp />
-			) : (
-				<IconAngleDown />
-			);
+			if (appState.dropdown_open.value) {
+				actionIcon.value = <IconAngleUp />;
+			} else {
+				actionIcon.value = <IconAngleDown />;
+			}
+		} else {
+			actionIcon.value = null;
 		}
 	});
 
@@ -86,7 +93,7 @@ export default forwardRef(function DropdownHandle(props, me) {
 		<button
 			ref={me}
 			id={props.id}
-			class={classnames}
+			class={classNames}
 			onClick={handleClick}
 			onKeyUp={handleKeyUp}
 			tabindex="0"
@@ -98,7 +105,7 @@ export default forwardRef(function DropdownHandle(props, me) {
 			aria-controls={props.containerId}
 			disabled={isDisabled}
 		>
-			{icon}
+			{actionIcon}
 		</button>
 	);
 });

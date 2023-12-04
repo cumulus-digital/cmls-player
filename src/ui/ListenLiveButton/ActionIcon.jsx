@@ -1,18 +1,24 @@
 import { h } from 'preact';
-import { useMemo } from 'preact/hooks';
+import { useLayoutEffect, useMemo } from 'preact/hooks';
 import { useSelector } from 'react-redux';
 import { playerStateSelects } from 'Store/playerStateSlice';
 
 import { IconPlay, IconPause } from '@/ui/Icons';
 
 import useLogRender from 'Utils/useLogRender';
+import { useSignal } from '@preact/signals';
 
 export default function ActionIcon(props) {
 	useLogRender('ActionIcon');
 	const playing = useSelector(playerStateSelects.playing);
 
-	const icon = useMemo(() => {
-		return playing ? <IconPause /> : <IconPlay />;
+	const icon = useSignal();
+	useLayoutEffect(() => {
+		if (playing) {
+			icon.value = <IconPause />;
+		} else {
+			icon.value = <IconPlay />;
+		}
 	}, [playing]);
 
 	return (

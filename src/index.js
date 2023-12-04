@@ -1,9 +1,14 @@
+if (process?.env?.NODE_ENV === 'development') {
+	// Support preact dev tools
+	require('preact/debug');
+}
+
 import './utils/leaderElection.js';
 
 import { createContext, h } from 'preact';
 import { useLayoutEffect, useRef } from 'preact/hooks';
 import register from 'preact-custom-element';
-import { useComputed } from '@preact/signals';
+import { useComputed, useSignal, useSignalEffect } from '@preact/signals';
 import { batch, Provider } from 'react-redux';
 
 import store from 'Store';
@@ -276,24 +281,25 @@ window.customElements.define(
 function CmlsPlayerProvider(props) {
 	const me = useRef(null);
 
-	useLayoutEffect(() => {}, []);
-
-	const cssVars = useComputed(() => {
+	const cssVars = useSignal();
+	useSignalEffect(() => {
 		const vars = [
 			`--background_color: ${appSignals.background_color}`,
 			`--highlight_color: ${appSignals.highlight_color}`,
 			`--text_color: ${appSignals.text_color}`,
 			`--default_button_height: ${appSignals.default_button_height}`,
-			`--mobile_bar_top: ${appSignals.mobile_bar_top}`,
+			`--mobile_bar_top: ${parseInt(appSignals.mobile_bar_top)}`,
 
-			`--button_top: ${appSignals.button_top}px`,
-			`--button_offset_top: ${appSignals.button_offset_top}px`,
-			`--button_left: ${appSignals.button_left}px`,
-			`--button_offset_left: ${appSignals.button_offset_left}px`,
-			`--button_height: ${appSignals.button_height}px`,
-			`--button_width: ${appSignals.button_width}px`,
+			`--button_top: ${parseInt(appSignals.button_top)}px`,
+			`--button_offset_top: ${parseInt(appSignals.button_offset_top)}px`,
+			`--button_left: ${parseInt(appSignals.button_left)}px`,
+			`--button_offset_left: ${parseInt(
+				appSignals.button_offset_left
+			)}px`,
+			`--button_height: ${parseInt(appSignals.button_height)}px`,
+			`--button_width: ${parseInt(appSignals.button_width)}px`,
 		];
-		return `:host { ${vars.join('; ')} }`;
+		cssVars.value = `:host { ${vars.join('; ')} }`;
 	});
 
 	return (

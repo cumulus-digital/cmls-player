@@ -1,5 +1,5 @@
 import { h, Fragment } from 'preact';
-import { useEffect, useContext } from 'preact/hooks';
+import { useEffect, useContext, useLayoutEffect } from 'preact/hooks';
 import { forwardRef } from 'preact/compat';
 import { shallowEqual, useSelector } from 'react-redux';
 
@@ -10,7 +10,8 @@ import { playerStateSelects } from 'Store/playerStateSlice';
 import { AppContext } from '@/signals';
 import useLogRender from 'Utils/useLogRender';
 import { useMemo } from 'react';
-import { useComputed } from '@preact/signals';
+import { useComputed, useSignal, useSignalEffect } from '@preact/signals';
+import { useClassNameSignal } from 'UI/hooks/ClassNameSignal';
 
 export default forwardRef(function DropdownContainer(props, ref) {
 	useLogRender('DropdownContainer');
@@ -21,14 +22,18 @@ export default forwardRef(function DropdownContainer(props, ref) {
 	const stations = useSelector(playerStateSelects.stations, shallowEqual);
 	const stations_count = useSelector(playerStateSelects['stations/count']);
 
-	const classname = useComputed(() => {
-		const list = [
-			'dropdown-container',
-			appState.dropdown_open.value ? 'open' : 'closed',
-		];
+	const classNames = useClassNameSignal('dropdown-container');
+
+	useSignalEffect(() => {
+		if (appState.dropdown_open.value) {
+			classNames.add('open');
+		} else {
+			classNames.delete('open');
+		}
+
+		classNames.deleteMany(['align-left', 'align-right', 'align-center']);
 
 		let position = 'align-left';
-
 		const me = ref.current;
 		if (me) {
 			const clientWidth =
@@ -48,9 +53,7 @@ export default forwardRef(function DropdownContainer(props, ref) {
 			}
 		}
 
-		list.push(position);
-
-		return list.join(' ');
+		classNames.add(position);
 	});
 
 	useEffect(() => {
@@ -106,54 +109,48 @@ export default forwardRef(function DropdownContainer(props, ref) {
 		}
 	};
 
-	/**
-	 * Output array of Station components ordered by
-	 * the station's order property
-	 *
-	 * @returns {array}
-	 */
-	const stationsOutput = useMemo(() => {
-		if (!appState.dropdown_open.value) {
-			return <></>;
-		}
-		const StationComponents = Object.values(stations)
-			?.sort((a, b) => {
-				// Primary is first
-				if (a.primary && !b.primary) return -1;
-				if (b.primary && !a.primary) return 1;
-				if (a.order < b.order) return -1;
-				if (a.order > b.order) return 1;
-				return 0;
-			})
-			.map((station, index) => (
-				<Station
-					{...station}
-					key={station.mount}
-					focus={
-						appState.dropdown_focus_station.value === index
-							? true
-							: null
-					}
-				/>
-			));
-		return StationComponents;
-	}, [
-		stations,
-		appState.dropdown_open.value,
-		appState.dropdown_focus_station.value,
-	]);
+	const stationRows = useSignal();
+	useLayoutEffect(() => {
+		stationRows.value = (
+			<>
+				{Object.values(stations)
+					?.sort((a, b) => {
+						// Primary first
+						if (a.primary && !b.primary) return -1;
+						if (b.primary && !a.primary) return 1;
+						// Then order
+						if (a.order < b.order) return -1;
+						if (a.order > b.order) return 1;
+						return 0;
+					})
+					.map((station, index) => {
+						return (
+							<Station
+								station={station}
+								key={station.mount}
+								index={index}
+								focus={
+									appState.dropdown_focus_station.value ===
+									index
+								}
+							/>
+						);
+					})}
+			</>
+		);
+	}, [stations, appState.dropdown_open.value, appState.dropdown_focus_station.value]);
 
 	return (
 		<div
 			ref={ref}
 			id={props.id}
-			class={classname}
+			class={classNames}
 			role="menu"
 			aria-labelledby={props.handleId}
 			onKeyUp={handleKeyUp}
 		>
 			<div>
-				<div class="dropdown-inner">{stationsOutput}</div>
+				<div class="dropdown-inner">{stationRows}</div>
 			</div>
 		</div>
 	);

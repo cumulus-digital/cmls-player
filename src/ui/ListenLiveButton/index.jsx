@@ -1,5 +1,11 @@
 import { h, Fragment } from 'preact';
-import { useCallback, useRef, useContext, useMemo } from 'preact/hooks';
+import {
+	useCallback,
+	useRef,
+	useContext,
+	useMemo,
+	useLayoutEffect,
+} from 'preact/hooks';
 import { shallowEqual, useSelector } from 'react-redux';
 
 import { playerStateSelects } from 'Store/playerStateSlice';
@@ -16,6 +22,7 @@ import { AppContext } from '@/signals';
 import useLogRender from 'Utils/useLogRender';
 import Artwork from 'UI/Generics/Artwork';
 import { stream_status } from 'Consts';
+import { useSignal, useSignalEffect } from '@preact/signals';
 
 export default function ListenLiveButton(props) {
 	useLogRender('ListenLiveButton');
@@ -39,71 +46,83 @@ export default function ListenLiveButton(props) {
 	);
 
 	// Handle alt tag
-	const buttonAlt = useMemo(() => {
+	const buttonAlt = useSignal('Loading...');
+	useLayoutEffect(() => {
 		if (!current_station) {
-			return 'Loading...';
+			buttonAlt.value = 'Loading...';
+			return;
 		}
-
 		if (playing) {
-			return `Stop streaming ${current_station.name}`;
+			buttonAlt.value = `Stop streaming ${current_station.name}`;
 		} else {
-			return `Listen live to ${current_station.name}`;
+			buttonAlt.value = `Listen live to ${current_station.name}`;
 		}
 	}, [playing, current_station]);
 
 	// Should the button be disabled?
-	const isDisabled = useMemo(() => {
-		return !(interactive && appState.sdk.ready.value);
+	const isDisabled = useSignal(false);
+	useLayoutEffect(() => {
+		isDisabled.value = !(interactive && appState.sdk.ready.value);
 	}, [interactive, appState.sdk.ready.value]);
 
-	const artwork = useMemo(() => {
-		if (
-			status === stream_status.LIVE_PLAYING &&
-			playing &&
-			cuepoint?.artwork
-		) {
-			return (
-				<Artwork
-					url={cuepoint.artwork}
-					alt={
-						cuepoint.artwork &&
-						`Album cover for ${appState.cue_label}`
-					}
-					class="live-artwork"
-				/>
-			);
-		} else if (
-			status === stream_status.LIVE_PLAYING &&
-			playing &&
-			appState.show_logo_without_artwork.value &&
-			current_station.logo
-		) {
-			return (
-				<Artwork
-					url={current_station.logo}
-					alt={`Logo for ${
-						current_station.name || current_station.mount
-					}`}
-					class="live-artwork station-logo"
-				/>
-			);
+	const artwork = useSignal();
+	useLayoutEffect(() => {
+		if (playing && status === stream_status.LIVE_PLAYING) {
+			if (cuepoint?.artwork) {
+				artwork.value = (
+					<Artwork
+						url={cuepoint.artwork}
+						alt={
+							cuepoint.artwork &&
+							`Album cover for ${appState.cue_label}`
+						}
+						class="live-artwork"
+					/>
+				);
+				return;
+			} else if (
+				appState.show_logo_without_artwork.value &&
+				current_station?.logo
+			) {
+				artwork.value = (
+					<Artwork
+						url={current_station.logo}
+						alt={`Logo for ${
+							current_station.name || current_station.mount
+						}`}
+						class="live-artwork station-logo"
+					/>
+				);
+				return;
+			}
 		}
-	}, [status, playing, cuepoint, current_station]);
+		artwork.value = null;
+	}, [
+		status,
+		playing,
+		cuepoint?.artwork,
+		current_station?.logo,
+		appState.show_logo_without_artwork.value,
+	]);
 
-	const content = useMemo(() => {
+	const content = useSignal();
+	useSignalEffect(() => {
 		if (appState.sdk.ready.value) {
-			return (
+			content.value = (
 				<>
 					<ActionIcon />
 					<LabelArea />
 				</>
 			);
+		} else {
+			content.value = null;
 		}
-	}, [appState.sdk.ready.value]);
+	});
 
-	const mobileLogo = useMemo(() => {
-		if (current_station.logo) {
-			return (
+	const mobileLogo = useSignal();
+	useLayoutEffect(() => {
+		if (current_station?.logo) {
+			mobileLogo.value = (
 				<Artwork
 					url={current_station.logo}
 					alt={`Logo for ${
@@ -112,8 +131,10 @@ export default function ListenLiveButton(props) {
 					class="station-logo"
 				/>
 			);
+		} else {
+			mobileLogo.value = null;
 		}
-	}, [current_station]);
+	}, [current_station?.logo]);
 
 	const togglePlay = useCallback(
 		(e) => {
