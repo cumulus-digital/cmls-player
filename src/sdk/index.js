@@ -105,7 +105,9 @@ export class SDK {
 				if (e.origin !== window.location.origin) return;
 
 				const data = e?.data;
-				if (!data?.action?.indexOf(this.messagePrefix) !== 0) return;
+				if (data?.action?.indexOf(this.messagePrefix) !== 0) {
+					return;
+				}
 
 				if (data.action === `${this.messagePrefix}:play`) {
 					this.onPlayMessage(data.mount);
@@ -225,7 +227,7 @@ export class SDK {
 		} else {
 			log.debug('Sending play message to parent');
 			this.sendMessage({
-				action: 'cmls-player:play',
+				action: `${this.messagePrefix}:play`,
 				mount,
 			});
 		}
@@ -278,7 +280,7 @@ export class SDK {
 		} else {
 			log.debug('Sending stop message to parent');
 			this.sendMessage({
-				action: 'cmls-player:stop',
+				action: `${this.messagePrefix}:stop`,
 			});
 		}
 	}

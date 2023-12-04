@@ -94,8 +94,7 @@ export default class MediaPlayer {
 		store.dispatch(playerStateActions['set/interactive'](false));
 		this.hasPlayed = true;
 		this.el.classList.add('show');
-		const ev = new CustomEvent('cmls-player-preroll-start');
-		SDK.emit(ev);
+		SDK.emitEvent('preroll-start');
 	}
 
 	onPlaybackError(e) {
@@ -116,8 +115,7 @@ export default class MediaPlayer {
 		this.hasPlayed = false;
 		this.el.classList.remove('show');
 
-		const ev = new CustomEvent('cmls-player-preroll-end');
-		SDK.emit(ev);
+		SDK.emitEvent('preroll-end');
 
 		if (this.playbackCompleteCallback) {
 			return this.playbackCompleteCallback();

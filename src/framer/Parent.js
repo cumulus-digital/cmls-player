@@ -280,12 +280,14 @@ export default class Parent {
 			ev.source !== this.framer?.iframe?.contentWindow ||
 			ev.data?.message?.indexOf(this.framer.messageKey) !== 0
 		) {
+			/*
 			log.debug('Ignoring message', {
 				sourceMatch: ev.source === this.framer?.iframe?.contentWindow,
 				messageKeyMatch:
 					ev.data?.message?.indexOf(this.framer.messageKey) === 0,
 				event: ev,
 			});
+			*/
 			return;
 		}
 
