@@ -62,14 +62,11 @@ export default class CuePointHandler {
 	}
 
 	sendCuePointEvent(mount, cue, origin_event) {
-		const ev = new CustomEvent('cmls-player-live-cue-point', {
-			detail: {
-				mount,
-				cuepoint: cue,
-				event: origin_event,
-			},
+		SDK.emitEvent('cue-point', {
+			mount,
+			cuepoint: cue,
+			event: origin_event,
 		});
-		SDK.emit(ev);
 	}
 
 	onTrackCuePoint(e) {

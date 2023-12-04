@@ -21,8 +21,8 @@ const onStreamStart = (e) => {
 			}
 		});
 };
-window.addEventListener('cmls-player-preroll-start', onStreamStart);
-window.addEventListener('cmls-player-stream-start', onStreamStart);
+window.addEventListener('cmls-player:preroll-start', onStreamStart);
+window.addEventListener('cmls-player:stream-start', onStreamStart);
 
 export default function htmlMediaInit() {
 	document

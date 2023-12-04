@@ -168,14 +168,11 @@ export default class TritonSDK {
 			playerStateActions['set/status'](stream_status[map_code])
 		);
 
-		const ev = new CustomEvent('cmls-player-stream-status', {
-			detail: {
-				code: map_code,
-				status: stream_status[map_code],
-				event: e,
-			},
+		SDK.emitEvent('stream-status', {
+			code: map_code,
+			status: stream_status[map_code],
+			event: e,
 		});
-		SDK.emit(ev);
 
 		// Handle when stream automatically pauses
 		if (
@@ -189,33 +186,17 @@ export default class TritonSDK {
 
 	static onStreamStart(e) {
 		const station = playerStateSelects['station/current'](store.getState());
-		const ev = new CustomEvent('cmls-player-stream-start', {
-			detail: {
-				mount: station?.mount,
-			},
-		});
-		SDK.emit(ev);
+		SDK.emitEvent('stream-start', { mount: station?.mount });
 		SDK?.onStreamStart();
 	}
 	static onStreamStop(e) {
 		const station = playerStateSelects['station/current'](store.getState());
-		const ev = new CustomEvent('cmls-player-stream-stop', {
-			detail: {
-				mount: station?.mount,
-			},
-		});
-		SDK.emit(ev);
+		SDK.emitEvent('stream-stop', { mount: station?.mount });
 		SDK?.onStreamStop();
 	}
 	static onStreamError(e) {
 		const station = playerStateSelects['station/current'](store.getState());
-		const ev = new CustomEvent('cmls-player-stream-error', {
-			detail: {
-				mount: station?.mount,
-				error: e,
-			},
-		});
-		SDK.emit(ev);
+		SDK.emitEvent('stream-error', { mount: stations?.mount, error: e });
 		SDK?.onStreamError();
 	}
 

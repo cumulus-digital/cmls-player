@@ -230,7 +230,7 @@ export default class Parent {
 					document.body.append(this.framer.iframe);
 					this.framer.iframe.focus();
 
-					this.framer.emit('cmls-player-iframe-created', {
+					this.framer.emitEvent('iframe-created', {
 						id: siteframe_id,
 					});
 				} else {
@@ -297,7 +297,7 @@ export default class Parent {
 		log.debug('Caught message', msg, ev.data);
 		switch (msg) {
 			case 'stateChange':
-				this.framer.emit('cmls-player-iframe-state', ev.data);
+				this.framer.emitEvent('iframe-state', ev.data);
 
 				const { url = null, title = null } = ev.data;
 				if (url) {

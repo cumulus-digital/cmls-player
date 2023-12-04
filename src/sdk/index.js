@@ -27,6 +27,8 @@ export class SDK {
 	static previousStation = false;
 	static playingHere = false;
 
+	static messagePrefix = 'cmls-player';
+
 	/**
 	 * Call init on the selected interface and instantiate global observers/listeners
 	 * @param {string} interface_type
@@ -103,12 +105,12 @@ export class SDK {
 				if (e.origin !== window.location.origin) return;
 
 				const data = e?.data;
-				if (!data?.action) return;
+				if (!data?.action?.indexOf(this.messagePrefix) !== 0) return;
 
-				if (data.action === 'cmls-player:play') {
+				if (data.action === `${this.messagePrefix}:play`) {
 					this.onPlayMessage(data.mount);
 				}
-				if (data.action === 'cmls-player:stop') {
+				if (data.action === `${this.messagePrefix}:stop`) {
 					this.onStopMessage();
 				}
 			});
@@ -140,6 +142,13 @@ export class SDK {
 	 * @param {CustomEvent} ev
 	 */
 	static emit(ev) {
+		window.dispatchEvent(ev);
+	}
+
+	static emitEvent(type, data) {
+		const ev = new CustomEvent(`${this.messagePrefix}:${type}`, {
+			detail: data,
+		});
 		window.dispatchEvent(ev);
 	}
 
@@ -426,13 +435,7 @@ export class SDK {
 			}
 
 			if (newCue.type === 'track') {
-				const ev = new CustomEvent('cmls-player-cue-point', {
-					detail: {
-						mount,
-						cuepoint: newCue,
-					},
-				});
-				this.emit(ev);
+				this.emitEvent('cue-point', { mount, cuepoint: newCue });
 
 				// fetch artwork for track types
 				log.debug(this);

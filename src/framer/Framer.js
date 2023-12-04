@@ -24,7 +24,7 @@ export class Framer {
 
 	patches = {};
 
-	messageKey = 'cmls_framer';
+	messageKey = 'cmls-framer';
 
 	static safeClass = 'do-not-remove';
 	static loadedClass = 'cmls-iframe-loaded';
@@ -258,6 +258,11 @@ export class Framer {
 		const ev = new CustomEvent(name, {
 			detail: data,
 		});
+		window.dispatchEvent(ev);
+	}
+
+	emitEvent(name, data) {
+		const ev = new CustomEvent(`${this.messageKey}:${name}`, data);
 		window.dispatchEvent(ev);
 	}
 

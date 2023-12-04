@@ -10,15 +10,15 @@ SDK: An interface for a streaming player SDK. Currently only supports the Triton
 
 Interplay and state between the SDK and UI is synchronized across windows through a customization of [redux-state-sync](https://github.com/aohua/redux-state-sync), using pubkey's [Broadcast Channel](https://github.com/pubkey/broadcast-channel) library.
 
-Framer: Allows the SDK interface to survive navigation around the website by containing the site within an iframe. Upon a normal initial page load, Framer listens for click events to intercept. When intercepted, an iframe (the "Child") is generated to contain the next pageload, and all existing top-level page elements lacking a "do-not-remove" class are removed. History state is reflected from the child to the parent. Framer also incorporates "patches" which modify specific site-specific elements to support better support this behavior.
+Framer: Allows the SDK interface to survive navigation around the website by containing the site within an iframe on navigation. Upon a normal initial page load, Framer listens for click events to intercept. When intercepted, an iframe (the "Child") is generated to contain the next pageload, and all existing top-level page elements lacking a "do-not-remove" class are removed. History state is reflected from the child to the parent. Framer also incorporates "patches" which modify specific site-specific elements to support better support this behavior.
 
 # Deployment and Configuration
 
 *Note: Only one instance of the player button can exist on a page.*
 
-The player button is configured in HTML, and rendered in place where that HTML is inserted. One or more stations must be defined. If more than one station is defined, a dropdown is made available to select the station to play. One station is designated as "primary". If not explicitly configured in the station tags, the first station is chosen.
+The CMLS Player button is configured in HTML, and rendered in place where its markup exists in the DOM. One or more stations must be defined. If more than one station is defined, a dropdown rendered to select the station to play. One station is designated as "primary" and displayed in the primary button. If not explicitly configured in the station tags, the first station is chosen as primary.
 
-The main player button controls and displays metadata for the "active" station. On load, the initial active station is the primary. If additional stations are defined and another station is played, it becomes the "active" station. When clicked, the player button begins or stops the stream for the active station.
+The CMLS player's primary button controls playback of the active station, and displays its metadata. On load, the initial active station is the primary station. If additional stations are defined and another station is played through the dropdown, that station becomes the "active" station. When clicked, the primary button begins or stops the stream for the active station only.
 
 Example configuration:
 
@@ -50,7 +50,7 @@ Example configuration:
 
 ## `<cmls-player>` tag
 
-Available `<cmls-player>` attributes are as follows. All attributes of this element are optional, defaults are shown in parentheses.
+Available `<cmls-player>` attributes are as follows. Unless specified, all attributes of this element are optional, and defaults are shown in parentheses.
 
 * `background-color` ("#e00") CSS background color for the player button and dropdown.
 * `highlight-color` ("#000") CSS color used for hover states and other accents. Be aware, the highlight color is often mixed with the background-color at varying opacities.
@@ -80,18 +80,18 @@ The player and Framer emit events to the global window object you can listen to.
 
 ## Player Events
 
-* `cmls-player-stream-start` Fired when live streaming begins.
-* `cmls-player-stream-stop` Fired when stream stops.
-* `cmls-player-stream-status` Fired on status changes from the SDK.
-* `cmls-player-stream-error` Fired when an error occurs in the streaming SDK.
-* `cmls-player-cue-point` Fired on cue point changes, event detail includes the new cue point.
-* `cmls-player-preroll-start` Fired when preroll begins playing.
-* `cmls-player-preroll-end` Fired when preroll ends (both successfully and on error).
+* `cmls-player:stream-start` Fired when live streaming begins.
+* `cmls-player:stream-stop` Fired when stream stops.
+* `cmls-player:stream-status` Fired on status changes from the SDK.
+* `cmls-player:stream-error` Fired when an error occurs in the streaming SDK.
+* `cmls-player:cue-point` Fired on cue point changes, event detail includes the new cue point.
+* `cmls-player:preroll-start` Fired when preroll begins playing.
+* `cmls-player:preroll-end` Fired when preroll ends (both successfully and on error).
 
 ## Framer Events
 
-* `cmls-player-iframe-created` Fired when the main window iframe is first created.
-* `cmls-player-iframe-state` Fired when the iframe's state (title, url) changes.
+* `cmls-framer:iframe-created` Fired when the main window iframe is first created.
+* `cmls-framer:iframe-state` Fired when the iframe's state (title, url) changes.
 
 # Global API
 
